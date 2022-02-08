@@ -1,11 +1,21 @@
-from calendar import c
-import time
+import csv
 import hashlib
-from urllib.request import urlopen, Request
+import os
+import re
+import time
+import urllib
+
+from calendar import c
+import requests
+from io import BytesIO
+from zipfile import ZipFile
+
 
 # setting the URL the user wants to monitor...
-url = Request('http://data.gdeltproject.org/gdeltv2/lastupdate.txt',
+r = requests.get('http://data.gdeltproject.org/gdeltv2/lastupdate-translation.txt',
 headers={'User-Agent': 'Mozilla/5.0'})
+
+print(r.text.split("/n")[0].split(" ")[2])
 
 
 # Performing a GET request and load the content
@@ -37,7 +47,8 @@ while True:
         # Checking to see if the new hash is the same
         # as the previous hash
         if newHash == currentHash:
-            continue
+            request = get('')
+
 
         # If something changed in the hashes
         else:
