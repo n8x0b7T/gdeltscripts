@@ -1,3 +1,5 @@
+#Templetate file used to build 'dataGrabber.py'...
+
 import csv
 import hashlib
 import os
@@ -21,7 +23,7 @@ print(r.text.split("/n")[0].split(" ")[2])
 # Performing a GET request and load the content
 # of the website and store it in a variable
 
-response = urlopen(url).read()
+response = requests(r).read()
 
 # Creating the initial hash...
 
@@ -47,7 +49,7 @@ while True:
         # Checking to see if the new hash is the same
         # as the previous hash
         if newHash == currentHash:
-            request = get('')
+            continue
 
 
         # If something changed in the hashes
