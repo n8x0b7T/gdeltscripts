@@ -18,6 +18,8 @@ from io import BytesIO
 from io import StringIO
 from zipfile import ZipFile
 
+# from pandas import read_csv
+
 
 # setting the URL the user wants to monitor...
 
@@ -38,11 +40,12 @@ def getCSV():
 
     print(zip_url)
 
-
     request = requests.get(zip_url)
     file = ZipFile(BytesIO(request.content))
 
-    print(file.read(file.filelist[0]))
+    file_contents = file.read(file.filelist[0])
+    # print(file.read(file.filelist[0]))
+    print(str(file_contents).split("\n")[0])
 
 
 getCSV()
@@ -50,50 +53,50 @@ getCSV()
 exit()
 
 
-# Performing a GET request and load the content
-# of the website and store it in a variable
+# # Performing a GET request and load the content
+# # of the website and store it in a variable
 
-response = requests(r).read()
+# response = requests(r).read()
 
-# Creating the initial hash...
+# # Creating the initial hash...
 
-current_hash = hashlib.sha224(response).hexdigest()
-print("running")
-time.sleep(10)
-while True:
-    # Performing the get request and storing it in a variable
-    response = urlopen(url).read()
+# current_hash = hashlib.sha224(response).hexdigest()
+# print("running")
+# time.sleep(10)
+# while True:
+#     # Performing the get request and storing it in a variable
+#     response = urlopen(url).read()
 
-    # Creating a hash...
-    currentHash = hashlib.sha224(response).hexdigest()
+#     # Creating a hash...
+#     currentHash = hashlib.sha224(response).hexdigest()
 
-    # Wait for 30 seconds...
-    time.sleep(30)
+#     # Wait for 30 seconds...
+#     time.sleep(30)
 
-    # Perform the get request...
-    response = urlopen(url).read()
+#     # Perform the get request...
+#     response = urlopen(url).read()
 
-        # Checking to see if the new hash is the same
-        # as the previous hash
-        if newHash == currentHash:
-            continue
+#         # Checking to see if the new hash is the same
+#         # as the previous hash
+#         if newHash == currentHash:
+#             continue
 
-    # Checking to see if the new hash is the same
-    # as the previous hash
-    if newHash == currentHash:
-        request = get('')
+#     # Checking to see if the new hash is the same
+#     # as the previous hash
+#     if newHash == currentHash:
+#         request = get('')
 
-    # If something changed in the hashes
-    else:
-        # notify
-        print("something changed")
+#     # If something changed in the hashes
+#     else:
+#         # notify
+#         print("something changed")
 
-        # again read the website
-        response = urlopen(url).read()
+#         # again read the website
+#         response = urlopen(url).read()
 
-        # create a hash
-        currentHash = hashlib.sha224(response).hexdigest()
+#         # create a hash
+#         currentHash = hashlib.sha224(response).hexdigest()
 
-        # Wait for 30 seconds
-        time.sleep(30)
-        continue
+#         # Wait for 30 seconds
+#         time.sleep(30)
+#         continue

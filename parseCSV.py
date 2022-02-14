@@ -1,8 +1,12 @@
+from __future__ import print_function
 import csv
 
-file = open('temp.export.CSV')
-data = csv.reader(file, delimiter='	')
+file = open('a.CSV')
+data = csv.reader(file, delimiter='\t')
+
 
 for i in data:
-    if i[5] == "IRQ" or i[15] == "IRQ":
-        print(i)
+    print(i[20])
+    # if i[5] == "US" or i[15] == "US":
+    #     print(i)
+i
