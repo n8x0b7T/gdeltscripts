@@ -14,17 +14,14 @@ csv_headers = ["GLOBALEVENTID", "SQLDATE", "MonthYear", "Year", "FractionDate", 
 country_code = "IQ"
 country_code = "US"
 
-# Takes a link to zipped CSV file
-
-
+# Takes zip link, unzips in memory, and returns a pandas dataframe
 def get_csv(zip_url):
     r = requests.get(zip_url)
     with ZipFile(BytesIO(r.content)) as f:
-        df = pd.read_csv(f.open(f.filelist[0]), delimiter='\t')
-        df.columns = csv_headers
+        df = pd.read_csv(f.open(f.filelist[0]), delimiter='\t', names=csv_headers)
         return(df)
 
-
+# Gets the zip url from GDELTv2
 def get_zip_url():
     r = requests.get(last_update_url,
                      headers=req_headers)
@@ -32,6 +29,7 @@ def get_zip_url():
     return(zip_url)
 
 
+# Uses to pandas to filter by country code
 def filter_csv(df):
     df = get_csv(zip_url)
     print(df[df['ActionGeo_CountryCode'] == country_code].head())
@@ -50,4 +48,4 @@ if __name__ == "__main__":
             print("its the same")
         time.sleep(1 * 60) 
 
-   
+# TODO: store data in parsable format
