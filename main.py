@@ -1,3 +1,4 @@
+from email import header
 import time
 import requests
 from zipfile import ZipFile
@@ -33,7 +34,7 @@ def get_zip_url():
 # Uses to pandas to filter by country code
 def filter_csv(df):
     df = get_csv(zip_url)
-    print(df[df['ActionGeo_CountryCode'] == country_code])
+    print(df[df['ActionGeo_CountryCode'] == country_code].to_csv("a.csv", sep="\t", header=False))
 
 
 if __name__ == '__main__':
