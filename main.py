@@ -1,3 +1,4 @@
+from os import sep
 import time
 import requests
 from zipfile import ZipFile
@@ -33,7 +34,7 @@ def get_zip_url():
 # Uses to pandas to filter by country code
 def filter_csv(df):
     df = get_csv(zip_url)
-    print(df[df['ActionGeo_CountryCode'] == country_code])
+    df[df['ActionGeo_CountryCode'] == country_code].to_csv(r"data.csv", mode = 'a', header = False, index = False, sep="\t")
 
 
 if __name__ == '__main__':
@@ -48,6 +49,3 @@ if __name__ == '__main__':
         else:
             print('its the same')
         time.sleep(5)
-
-# TODO: store data in parsable format
-
