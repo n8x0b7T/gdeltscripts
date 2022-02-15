@@ -16,7 +16,7 @@ req_headers = headers = {
     'Accept-Language': 'en-US,en;q=0.9',
 }
 
-f = csv.reader(open('a.csv'), delimiter='\t')
+f = csv.reader(open('data.csv'), delimiter='\t')
 
 urls = []
 for i in f:
