@@ -50,3 +50,4 @@ if __name__ == '__main__':
         time.sleep(5)
 
 # TODO: store data in parsable format
+
