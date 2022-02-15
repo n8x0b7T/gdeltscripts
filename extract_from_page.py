@@ -1,12 +1,26 @@
 import requests
+import csv
 from bs4 import BeautifulSoup
 
-url = 'https://www.itespresso.fr/press-release/sectigo-annonce-lvnement-exclusif-du-secteur-de-la-cyberscurit-le-sommet-identity-first-security-2022-de-sectigo'
+req_headers = headers = {
+    'Connection': 'keep-alive',
+    'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'Sec-Fetch-Site': 'cross-site',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Dest': 'document',
+    'Accept-Language': 'en-US,en;q=0.9',
+}
 
-urls = ["https://www.itespresso.fr/press-release/sectigo-annonce-lvnement-exclusif-du-secteur-de-la-cyberscurit-le-sommet-identity-first-security-2022-de-sectigo", "https://www.telemundo51.com/entretenimiento/demanda-familia-haluna-hutchins-muerte-set-rust-alec-baldwin-nuevo-mexico/2270800/", "https://www.reporteindigo.com/latitud/cientifico-oaxaqueno-se-declara-culpable-de-espiar-para-rusia-en-los-estados-unidos-en-2019/", "http://chechenews.com/1-4233/", "https://www.telemundo40.com/noticias/local/a-prision-cinco-anos-tras-fallido-intento-de-cruzar-la-frontera-con-varias-drogas/2177180/", "https://www.reporteindigo.com/latitud/cientifico-oaxaqueno-se-declara-culpable-de-espiar-para-rusia-en-los-estados-unidos-en-2019/", "https://www.itespresso.fr/press-release/sectigo-annonce-lvnement-exclusif-du-secteur-de-la-cyberscurit-le-sommet-identity-first-security-2022-de-sectigo", "https://www.dv.is/pressan/2022/2/15/motmaelti-ber-ad-ofan-vid-sendirad-bandarikjanna-dont-pussy/", "https://www.rfi.fr/es/am%C3%A9ricas/20220215-invocar-la-inmunidad-es-una-posibilidad-para-evitar-la-extradici%C3%B3n-afirma-abogado-de-hern%C3%A1ndez", "https://www.telemundo40.com/noticias/eeuu/hasta-200000-aumentan-recompensa-por-el-caso-sin-resolver-del-temido-asesino-en-serie-doodler-en-san-francisco/2173500/", "https://www.telemundo40.com/noticias/eeuu/hasta-200000-aumentan-recompensa-por-el-caso-sin-resolver-del-temido-asesino-en-serie-doodler-en-san-francisco/2173500/", "https://www.investireoggi.it/finanza-borsa/news/piazza-affari-reagisce-con-vigore-ftse-mib-209-vola-bper-banca/", "https://www.telemundo40.com/local/gobernador-de-texas-sobre-el-combate-al-fentanilo-y-otras-drogas/2177200/", "https://www.xanthitimes.gr/2022/02/15/ekklisiasmos-ston-i-n-agioy-georgioy-sti-glayki/", "https://www.telemundo51.com/entretenimiento/demanda-familia-haluna-hutchins-muerte-set-rust-alec-baldwin-nuevo-mexico/2270800/", "https://letraslibres.com/revista-espana/concurso-de-cuento-instantaneas-para-morphinomanos/", "https://www.brasil247.com/mundo/herdeiro-do-trono-britanico-faz-acordo-para-evitar-processo-sobre-abuso-sexual-de-menor", "http://special.tass.ru/mezhdunarodnaya-panorama/13719555", "https://www.ellitoral.com/index.php/id_um/341238-cuales-son-las-acusaciones-de-virginia-giuffre-contra-el-principe-andrew-caso-epstein-internacionales-caso-epstein.html", "https://www.periodistadigital.com/pd-america/20220215/eeuu-honduras-extradite-expresidente-juan-orlando-hernandez-noticia-689404598677/", "https://www.periodistadigital.com/pd-america/20220215/eeuu-honduras-extradite-expresidente-juan-orlando-hernandez-noticia-689404598677/", "https://www.rfi.fr/es/am%C3%A9ricas/20220215-invocar-la-inmunidad-es-una-posibilidad-para-evitar-la-extradici%C3%B3n-afirma-abogado-de-hern%C3%A1ndez", "https://www.lrt.lt/naujienos/pasaulyje/6/1616874/izraelio-premjeras-per-istorini-vizita-susitiko-su-bahreino-karaliumi", "https://www.lrt.lt/naujienos/pasaulyje/6/1616874/izraelio-premjeras-per-istorini-vizita-susitiko-su-bahreino-karaliumi", "https://www.reporteindigo.com/latitud/cientifico-oaxaqueno-se-declara-culpable-de-espiar-para-rusia-en-los-estados-unidos-en-2019/", "https://www.telemundo51.com/entretenimiento/demanda-familia-haluna-hutchins-muerte-set-rust-alec-baldwin-nuevo-mexico/2270800/", "https://www.segs.com.br/info-ti/332905-2-anos-de-covid-19-5-licoes-tecnologicas-que-aprendemos-ate-agora", "https://lineadirectaportal.com/mexico/2022/2/15/loret-de-mola-responde-peticion-de-amlo-esta-arrinconado-desesperado-dice-452291.html", "https://www.ellitoral.com/index.php/id_um/341238-cuales-son-las-acusaciones-de-virginia-giuffre-contra-el-principe-andrew-caso-epstein-internacionales-caso-epstein.html", "https://www.itespresso.fr/press-release/sectigo-annonce-lvnement-exclusif-du-secteur-de-la-cyberscurit-le-sommet-identity-first-security-2022-de-sectigo", "https://www.alarab.com/Article/1022968", "https://www.telemundo40.com/local/gobernador-de-texas-sobre-el-combate-al-fentanilo-y-otras-drogas/2177200/", "https://www.reporteindigo.com/latitud/cientifico-oaxaqueno-se-declara-culpable-de-espiar-para-rusia-en-los-estados-unidos-en-2019/", "https://www.svoboda.org/a/blinken-lavrovu-neobhodima-nastoyaschaya-deeskalatsiya/31705274.html", "https://www.reporteindigo.com/latitud/cientifico-oaxaqueno-se-declara-culpable-de-espiar-para-rusia-en-los-estados-unidos-en-2019/", "https://www.reporteindigo.com/latitud/cientifico-oaxaqueno-se-declara-culpable-de-espiar-para-rusia-en-los-estados-unidos-en-2019/", "https://www.reporteindigo.com/latitud/cientifico-oaxaqueno-se-declara-culpable-de-espiar-para-rusia-en-los-estados-unidos-en-2019/", "https://www.itespresso.fr/press-release/sectigo-annonce-lvnement-exclusif-du-secteur-de-la-cyberscurit-le-sommet-identity-first-security-2022-de-sectigo", "https://www.reporteindigo.com/latitud/cientifico-oaxaqueno-se-declara-culpable-de-espiar-para-rusia-en-los-estados-unidos-en-2019/", "https://www.telemundo51.com/entretenimiento/demanda-familia-haluna-hutchins-muerte-set-rust-alec-baldwin-nuevo-mexico/2270800/", "https://www.telemundo51.com/entretenimiento/demanda-familia-haluna-hutchins-muerte-set-rust-alec-baldwin-nuevo-mexico/2270800/", "https://www.telemundo51.com/entretenimiento/demanda-familia-haluna-hutchins-muerte-set-rust-alec-baldwin-nuevo-mexico/2270800/", "https://www.wnp.pl/rynki-zagraniczne/ap-wywiad-usa-oskarza-popularny-portal-o-szerzenie-rosyjskiej-propagandy", "https://www.telemundo51.com/entretenimiento/demanda-familia-haluna-hutchins-muerte-set-rust-alec-baldwin-nuevo-mexico/2270800/", "https://lasillarota.com/mundo/el-acuerdo-que-alcanzo-el-principe-andres-en-su-caso-por-abuso-sexual/617118", "https://www.telemundo40.com/local/gobernador-de-texas-sobre-el-combate-al-fentanilo-y-otras-drogas/2177200/", "https://www.telemundo51.com/entretenimiento/demanda-familia-haluna-hutchins-muerte-set-rust-alec-baldwin-nuevo-mexico/2270800/", "https://lasillarota.com/mundo/el-acuerdo-que-alcanzo-el-principe-andres-en-su-caso-por-abuso-sexual/617118", "https://www.rfi.fr/es/am%C3%A9ricas/20220215-invocar-la-inmunidad-es-una-posibilidad-para-evitar-la-extradici%C3%B3n-afirma-abogado-de-hern%C3%A1ndez", "https://www.emol.com/noticias/Internacional/2022/02/15/1046872/tiroteo-sandy-hook-acuerdo-fabricante.html", "https://www.telemundo40.com/local/gobernador-de-texas-sobre-el-combate-al-fentanilo-y-otras-drogas/2177200/"]
+f = csv.reader(open("a.csv"), delimiter='\t')
 
-req_headers = {'User-Agent': 'Mozilla/5.0'}
-
+urls = []
+for i in f:
+    urls.append(i[-1])
 
 def parse_site(url):
     r = requests.get(url, headers=req_headers).text
@@ -21,7 +35,7 @@ def parse_site(url):
 
     for i in text:
         if i.parent.name == 'p':
-            x['body'] += f'{i} '
+            x['body'] += f'{i.text} '
 
     return x
 
