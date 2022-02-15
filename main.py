@@ -1,10 +1,8 @@
-from os import sep
 import time
 import requests
 from zipfile import ZipFile
 from io import BytesIO
 import pandas as pd
-from threading import Timer
 
 
 last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate-translation.txt'
@@ -17,13 +15,18 @@ country_code = 'IQ'
 country_code = 'US'
 
 # Takes zip link, unzips in memory, and returns a pandas dataframe
+
+
 def get_csv(zip_url):
     r = requests.get(zip_url, headers=req_headers)
     with ZipFile(BytesIO(r.content)) as f:
-        df = pd.read_csv(f.open(f.filelist[0]), delimiter='\t', names=csv_headers)
+        df = pd.read_csv(
+            f.open(f.filelist[0]), delimiter='\t', names=csv_headers)
         return(df)
 
 # Gets the zip url from GDELTv2
+
+
 def get_zip_url():
     r = requests.get(last_update_url,
                      headers=req_headers)
@@ -34,7 +37,8 @@ def get_zip_url():
 # Uses to pandas to filter by country code
 def filter_csv(df):
     df = get_csv(zip_url)
-    df[df['ActionGeo_CountryCode'] == country_code].to_csv(r"data.csv", mode = 'a', header = False, index = False, sep="\t")
+    df[df['ActionGeo_CountryCode'] == country_code].to_csv(
+        'data.csv', mode='a', header=False, index=False, sep='\t')
 
 
 if __name__ == '__main__':

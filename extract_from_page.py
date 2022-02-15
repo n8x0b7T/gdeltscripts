@@ -16,11 +16,12 @@ req_headers = headers = {
     'Accept-Language': 'en-US,en;q=0.9',
 }
 
-f = csv.reader(open("a.csv"), delimiter='\t')
+f = csv.reader(open('data.csv'), delimiter='\t')
 
 urls = []
 for i in f:
     urls.append(i[-1])
+
 
 def parse_site(url):
     r = requests.get(url, headers=req_headers).text
@@ -28,7 +29,7 @@ def parse_site(url):
     soup = BeautifulSoup(r, 'html.parser')
     text = soup.find_all(text=True)
 
-    x= {
+    x = {
         'title': soup.find_all('title')[0].text,
         'body': ''
     }
