@@ -48,4 +48,4 @@ if __name__ == '__main__':
             last_zip_url = zip_url
         else:
             print('its the same')
-        time.sleep(5)
+        time.sleep(5*60)
