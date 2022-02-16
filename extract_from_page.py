@@ -1,6 +1,10 @@
 import requests
 import csv
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
+from newspaper import Article
+from newspaper import Config
+
+
 
 req_headers = headers = {
     'Connection': 'keep-alive',
@@ -16,30 +20,33 @@ req_headers = headers = {
     'Accept-Language': 'en-US,en;q=0.9',
 }
 
+config = Config()
+config.headers = req_headers
+config.request_timeout = 10
+
 f = csv.reader(open('data.csv'), delimiter='\t')
 
 urls = []
 for i in f:
     urls.append(i[-1])
 
-
 def parse_site(url):
-    r = requests.get(url, headers=req_headers).text
 
-    soup = BeautifulSoup(r, 'html.parser')
-    text = soup.find_all(text=True)
+    
+    article = Article(url, config=config)
+    article.download()
+    article.parse()
 
     x = {
-        'title': soup.find_all('title')[0].text,
-        'body': ''
+        'url': url,
+        'title': article.title,
+        'body': article.text
     }
+    return(x)
 
-    for i in text:
-        if i.parent.name == 'p':
-            x['body'] += f'{i.text} '
 
-    return x
-
+page_texts = []
 
 for i in urls:
     print(parse_site(i))
+    # page_texts.append(parse_site(i))
