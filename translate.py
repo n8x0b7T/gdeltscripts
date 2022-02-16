@@ -1,12 +1,19 @@
 from cgitb import text
 import requests
+import csv
 
-text = ''''''
 
-r = requests.post("http://localhost:5000/translate", json={
-    'q': text,
-    'source': "fr",
-    'target': "en"
-})
+f = csv.reader(open('extracted_text.csv'), delimiter='\t')
 
-print(r.text)
+texts = []
+for i in f:
+    texts.append(i[0])
+
+for i in texts:
+    r = requests.post("http://localhost:5000/translate", json={
+        'q': i,
+        'source': "auto",
+        'target': "en"
+    })
+
+    print(r.text)
