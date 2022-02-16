@@ -1,12 +1,11 @@
 import requests
+import re
 import csv
-# from bs4 import BeautifulSoup
 from newspaper import Article
 from newspaper import Config
 
 
-
-req_headers = headers = {
+req_headers = {
     'Connection': 'keep-alive',
     'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="98", "Google Chrome";v="98"',
     'sec-ch-ua-mobile': '?0',
@@ -30,23 +29,23 @@ urls = []
 for i in f:
     urls.append(i[-1])
 
-def parse_site(url):
+def make_safe(x):
+    text = x.replace('\n', '')
+    return (re.sub(r'[^\w\-\. ]','', x))
 
-    
+def parse_site(url):
     article = Article(url, config=config)
     article.download()
     article.parse()
 
-    x = {
-        'url': url,
-        'title': article.title,
-        'body': article.text
-    }
+
+    x = [make_safe(article.title), make_safe(article.text), url]
     return(x)
 
 
-page_texts = []
-
-for i in urls:
-    print(parse_site(i))
-    # page_texts.append(parse_site(i))
+with open("extracted_text.csv", 'w') as f:
+    for i in urls:
+        csvwriter = csv.writer(f, delimiter="\t")
+        content = parse_site(i)
+        print(content)
+        csvwriter.writerow(content)

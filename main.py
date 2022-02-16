@@ -15,8 +15,6 @@ country_code = 'IQ'
 country_code = 'US'
 
 # Takes zip link, unzips in memory, and returns a pandas dataframe
-
-
 def get_csv(zip_url):
     r = requests.get(zip_url, headers=req_headers)
     with ZipFile(BytesIO(r.content)) as f:
@@ -25,8 +23,6 @@ def get_csv(zip_url):
         return(df)
 
 # Gets the zip url from GDELTv2
-
-
 def get_zip_url():
     r = requests.get(last_update_url,
                      headers=req_headers)
