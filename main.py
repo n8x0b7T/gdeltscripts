@@ -1,8 +1,10 @@
+import os
 import time
 import requests
 from zipfile import ZipFile
 from io import BytesIO
 import pandas as pd
+from datetime import date
 
 
 last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate-translation.txt'
@@ -34,10 +36,11 @@ def get_zip_url():
 def filter_csv(df):
     df = get_csv(zip_url)
     df[df['ActionGeo_CountryCode'] == country_code].to_csv(
-        'data.csv', mode='a', header=False, index=False, sep='\t')
+        f'data/data_{country_code}_{date.today()}.csv', mode='a', header=False, index=False, sep='\t')
 
 
 if __name__ == '__main__':
+    os.makedirs("./data", exist_ok=True)
     last_zip_url = ''
     while True:
         zip_url = get_zip_url()

@@ -23,11 +23,7 @@ config = Config()
 config.headers = req_headers
 config.request_timeout = 10
 
-f = csv.reader(open('data.csv'), delimiter='\t')
-
-urls = []
-for i in f:
-    urls.append(i[-1])
+f = csv.reader(open('./data/data_US_2022-02-25.csv'), delimiter='\t')
 
 def make_safe(x):
     text = x.replace('\n', '')
@@ -43,9 +39,9 @@ def parse_site(url):
     return(x)
 
 
-with open("extracted_text.csv", 'w') as f:
-    for i in urls:
-        csvwriter = csv.writer(f, delimiter="\t")
-        content = parse_site(i)
+with open("extracted_text.csv", 'w') as file:
+    for i in f:
+        csvwriter = csv.writer(file, delimiter="\t")
+        content = parse_site(i[-1])
         print(content)
         csvwriter.writerow(content)
