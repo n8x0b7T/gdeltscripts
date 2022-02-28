@@ -1,3 +1,4 @@
+import os
 import time
 import requests
 from zipfile import ZipFile
@@ -41,6 +42,7 @@ def filter_csv(df):
 
 
 if __name__ == '__main__':
+    os.makedirs("./data", exist_ok=True)
     last_zip_url = ''
     while True:
         zip_url = get_zip_url()
