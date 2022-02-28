@@ -3,9 +3,11 @@ import requests
 from zipfile import ZipFile
 from io import BytesIO
 import pandas as pd
+import csv
+import random
 
 
-last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate-translation.txt'
+last_update_url = 'http://data.gdeltproject.org/gdeltv2/masterfilelist-translation.txt'
 req_headers = {'User-Agent': 'Mozilla/5.0'}
 
 csv_headers = ['GLOBALEVENTID', 'SQLDATE', 'MonthYear', 'Year', 'FractionDate', 'Actor1Code', 'Actor1Name', 'Actor1CountryCode', 'Actor1KnownGroupCode', 'Actor1EthnicCode', 'Actor1Religion1Code', 'Actor1Religion2Code', 'Actor1Type1Code', 'Actor1Type2Code', 'Actor1Type3Code', 'Actor2Code', 'Actor2Name', 'Actor2CountryCode', 'Actor2KnownGroupCode', 'Actor2EthnicCode', 'Actor2Religion1Code', 'Actor2Religion2Code', 'Actor2Type1Code', 'Actor2Type2Code', 'Actor2Type3Code', 'IsRootEvent', 'EventCode', 'EventBaseCode', 'EventRootCode', 'QuadClass', 'GoldsteinScale', 'NumMentions',
@@ -32,9 +34,10 @@ def get_zip_url():
 
 # Uses to pandas to filter by country code
 def filter_csv(df):
+    date_string = ""
     df = get_csv(zip_url)
     df[df['ActionGeo_CountryCode'] == country_code].to_csv(
-        'data.csv', mode='a', header=False, index=False, sep='\t')
+        f'data{date_string}.csv', mode='a', header=False, index=False, sep='\t')
 
 
 if __name__ == '__main__':
@@ -49,3 +52,8 @@ if __name__ == '__main__':
         else:
             print('its the same')
         time.sleep(5*60)
+
+
+def write_csv(df):
+    csvFile = open('GDelt_2.0_Data.csv', 'wt+')
+    writer = csv.writer(csvfile=)
