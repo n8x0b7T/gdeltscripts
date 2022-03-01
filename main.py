@@ -4,9 +4,7 @@ import requests
 from zipfile import ZipFile
 from io import BytesIO
 import pandas as pd
-import csv
-import random
-
+import datetime
 
 last_update_url = 'http://data.gdeltproject.org/gdeltv2/masterfilelist-translation.txt'
 req_headers = {'User-Agent': 'Mozilla/5.0'}
@@ -35,10 +33,10 @@ def get_zip_url():
 
 # Uses to pandas to filter by country code
 def filter_csv(df):
-    date_string = ""
+    date_string = datetime.date.today()
     df = get_csv(zip_url)
     df[df['ActionGeo_CountryCode'] == country_code].to_csv(
-        f'data{date_string}.csv', mode='a', header=False, index=False, sep='\t')
+        f'./data/{country_code}_{date_string}.csv', mode='a', header=False, index=False, sep='\t')
 
 
 if __name__ == '__main__':
@@ -54,8 +52,3 @@ if __name__ == '__main__':
         else:
             print('its the same')
         time.sleep(5*60)
-
-
-def write_csv(df):
-    csvFile = open('GDelt_2.0_Data.csv', 'wt+')
-    writer = csv.writer(csvfile)
