@@ -6,7 +6,7 @@ from io import BytesIO
 import pandas as pd
 import datetime
 
-last_update_url = 'http://data.gdeltproject.org/gdeltv2/masterfilelist-translation.txt'
+last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate-translation.txt'
 req_headers = {'User-Agent': 'Mozilla/5.0'}
 
 csv_headers = ['GLOBALEVENTID', 'SQLDATE', 'MonthYear', 'Year', 'FractionDate', 'Actor1Code', 'Actor1Name', 'Actor1CountryCode', 'Actor1KnownGroupCode', 'Actor1EthnicCode', 'Actor1Religion1Code', 'Actor1Religion2Code', 'Actor1Type1Code', 'Actor1Type2Code', 'Actor1Type3Code', 'Actor2Code', 'Actor2Name', 'Actor2CountryCode', 'Actor2KnownGroupCode', 'Actor2EthnicCode', 'Actor2Religion1Code', 'Actor2Religion2Code', 'Actor2Type1Code', 'Actor2Type2Code', 'Actor2Type3Code', 'IsRootEvent', 'EventCode', 'EventBaseCode', 'EventRootCode', 'QuadClass', 'GoldsteinScale', 'NumMentions',
@@ -33,7 +33,7 @@ def get_zip_url():
 
 # Uses to pandas to filter by country code
 def filter_csv(df):
-    date_string = datetime.date.today()
+    date_string = str(datetime.date.today()).replace("-", "_")
     df = get_csv(zip_url)
     df[df['ActionGeo_CountryCode'] == country_code].to_csv(
         f'./data/{country_code}_{date_string}.csv', mode='a', header=False, index=False, sep='\t')
@@ -45,10 +45,11 @@ if __name__ == '__main__':
     while True:
         zip_url = get_zip_url()
         if zip_url != last_zip_url:
-            print(zip_url)
+            print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] Fetching new data from url:')
+            print(zip_url + "\n")
             df = get_csv(zip_url)
             filter_csv(df)
             last_zip_url = zip_url
         else:
-            print('its the same')
+            print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...')
         time.sleep(5*60)

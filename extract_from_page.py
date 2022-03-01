@@ -29,19 +29,19 @@ def make_safe(x):
     text = x.replace('\n', '')
     return (re.sub(r'[^\w\-\. ]','', x))
 
-def parse_site(url):
+def parse_site(x):
+    url = x[-1]
     article = Article(url, config=config)
     article.download()
     article.parse()
 
-
-    x = [make_safe(article.title), make_safe(article.text), url]
+    x = [x[37] ,make_safe(article.title), make_safe(article.text), url]
     return(x)
 
 
 with open("extracted_text.csv", 'w') as file:
     for i in f:
         csvwriter = csv.writer(file, delimiter="\t")
-        content = parse_site(i[-1])
+        content = parse_site(i)
         print(content)
         csvwriter.writerow(content)

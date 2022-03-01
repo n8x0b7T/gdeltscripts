@@ -1,0 +1,4 @@
+pandas
+pycountry
+newspaper3k
+rake_nltk
