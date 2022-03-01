@@ -23,25 +23,30 @@ config = Config()
 config.headers = req_headers
 config.request_timeout = 10
 
-f = csv.reader(open('./data/data_US_2022-02-25.csv'), delimiter='\t')
+f = csv.reader(open('./data/US_2022_03_01.csv'), delimiter='\t')
+
 
 def make_safe(x):
     text = x.replace('\n', '')
-    return (re.sub(r'[^\w\-\. ]','', x))
+    return (re.sub(r'[^\w\-\. ]', '', x))
+
 
 def parse_site(x):
     url = x[-1]
     article = Article(url, config=config)
-    article.download()
-    article.parse()
+    try:
+        article.download()
+        article.parse()
 
-    x = [x[37] ,make_safe(article.title), make_safe(article.text), url]
-    return(x)
-
+        return [x[37], make_safe(article.title), make_safe(article.text), url]
+    except:
+        return False
 
 with open("extracted_text.csv", 'w') as file:
+    csvwriter = csv.writer(file, delimiter="\t")
     for i in f:
-        csvwriter = csv.writer(file, delimiter="\t")
         content = parse_site(i)
-        print(content)
-        csvwriter.writerow(content)
+        if content != False:
+            print(i[-1])
+            print(content)
+            csvwriter.writerow(content)
