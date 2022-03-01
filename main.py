@@ -58,4 +58,4 @@ if __name__ == '__main__':
 
 def write_csv(df):
     csvFile = open('GDelt_2.0_Data.csv', 'wt+')
-    writer = csv.writer(csvfile=)
+    writer = csv.writer(csvfile)
