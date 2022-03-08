@@ -46,7 +46,7 @@ if __name__ == '__main__':
         zip_url = get_zip_url()
         if zip_url != last_zip_url:
             print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] Fetching new data from url:')
-            print(zip_url + "\n")
+            print(zip_url)
             df = get_csv(zip_url)
             filter_csv(df)
             last_zip_url = zip_url
