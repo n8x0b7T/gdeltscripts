@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from rake_nltk import Rake
 
 import nltk

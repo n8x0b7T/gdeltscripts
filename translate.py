@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from cgitb import text
 import requests
 import csv
