@@ -9,8 +9,6 @@ import pandas as pd
 import datetime
 
 last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate.txt'
-last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate-translation.txt'
-
 req_headers = {'User-Agent': 'Mozilla/5.0'}
 
 csv_headers = ['GLOBALEVENTID', 'SQLDATE', 'MonthYear', 'Year', 'FractionDate', 'Actor1Code', 'Actor1Name', 'Actor1CountryCode', 'Actor1KnownGroupCode', 'Actor1EthnicCode', 'Actor1Religion1Code', 'Actor1Religion2Code', 'Actor1Type1Code', 'Actor1Type2Code', 'Actor1Type3Code', 'Actor2Code', 'Actor2Name', 'Actor2CountryCode', 'Actor2KnownGroupCode', 'Actor2EthnicCode', 'Actor2Religion1Code', 'Actor2Religion2Code', 'Actor2Type1Code', 'Actor2Type2Code', 'Actor2Type3Code', 'IsRootEvent', 'EventCode', 'EventBaseCode', 'EventRootCode', 'QuadClass', 'GoldsteinScale', 'NumMentions',
@@ -20,12 +18,12 @@ country_code = 'IZ'
 # country_code = 'US'
 
 # Takes zip link, unzips in memory, and returns a pandas dataframe
-def get_csv(zip_url):
-    r = requests.get(zip_url, headers=req_headers)
-    with ZipFile(BytesIO(r.content)) as f:
-        df = pd.read_csv(
-            f.open(f.filelist[0]), delimiter='\t', names=csv_headers)
-        return(df)
+def unzip_csv(zip_file):
+    with open(f"./archives/{zip_file}", "rb") as e:
+        with ZipFile(BytesIO(e.read())) as f:
+            df = pd.read_csv(
+                f.open(f.filelist[0]), delimiter='\t', names=csv_headers)
+            return(df)
 
 # Gets the zip url from GDELTv2
 def get_zip_url():
@@ -44,15 +42,20 @@ def filter_csv(df):
 
 if __name__ == '__main__':
     os.makedirs("./data", exist_ok=True)
-    last_zip_url = ''
-    while True:
-        zip_url = get_zip_url()
-        if zip_url != last_zip_url:
-            print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] Fetching new data from url:')
-            print(zip_url)
-            df = get_csv(zip_url)
-            filter_csv(df)
-            last_zip_url = zip_url
-        else:
-            print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...')
-        time.sleep(5*60)
+    zip_archives = os.listdir("./archives")
+    for i in zip_archives:
+        df = unzip_csv(i)
+        filter_csv(df)
+
+    # last_zip_url = ''
+    # # while True:
+    # #     zip_url = get_zip_url()
+    # #     if zip_url != last_zip_url:
+    # #         print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] Fetching new data from url:')
+    # #         print(zip_url)
+    # #         df = get_csv(zip_url)
+    # #         filter_csv(df)
+    # #         last_zip_url = zip_url
+    # #     else:
+    # #         print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...')
+    # #     time.sleep(5*60)
