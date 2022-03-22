@@ -41,7 +41,7 @@ def download_archives():
     
     for idx, val in enumerate(urls):
         if not os.path.isfile("./archives/" + val.split('/')[-1]):
-            print(f'Downloading {idx}/{len(urls)} archives', end='\r')
+            print(f'Downloading {idx+1}/{len(urls)} archives', end='\r')
             get_csv(val)
     print()
 
