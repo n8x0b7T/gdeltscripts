@@ -25,8 +25,7 @@ config = Config()
 config.headers = req_headers
 config.request_timeout = 10
 
-f = csv.reader(open('./data/US_2022_03_01.csv'), delimiter='\t')
-
+f = csv.reader(open('./a.csv'), delimiter='\t')
 
 def de_duplicate_url(x):
     res = []
@@ -40,9 +39,8 @@ def de_duplicate_url(x):
 f = de_duplicate_url(f)
 
 def make_safe(x):
-    text = x.replace('\n', '')
+    text = x.replace('\n', '').replace('\t', '')
     return (re.sub(r'[^\w\-\. ]', '', x))
-
 
 def parse_site(x):
     url = x[-1]

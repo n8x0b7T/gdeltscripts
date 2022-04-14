@@ -46,16 +46,3 @@ if __name__ == '__main__':
     for i in zip_archives:
         df = unzip_csv(i)
         filter_csv(df)
-
-    # last_zip_url = ''
-    # # while True:
-    # #     zip_url = get_zip_url()
-    # #     if zip_url != last_zip_url:
-    # #         print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] Fetching new data from url:')
-    # #         print(zip_url)
-    # #         df = get_csv(zip_url)
-    # #         filter_csv(df)
-    # #         last_zip_url = zip_url
-    # #     else:
-    # #         print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...')
-    # #     time.sleep(5*60)

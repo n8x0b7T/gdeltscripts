@@ -12,8 +12,12 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--country', help='two letter country code', default='IZ')
-parser.add_argument('--realtime', help='listen in real time for update', action='store_true')
-parser.add_argument('--analyze', help='sum the integers (default: find the max)')
+parser.add_argument(
+    '--realtime', help='listen in real time for update', action='store_true')
+parser.add_argument(
+    '--analyze', help='sum the integers (default: find the max)')
+parser.add_argument(
+    '-o', help='select output file')
 args = parser.parse_args()
 
 
@@ -29,10 +33,10 @@ country_code = args.country.upper()
 
 # Unzips in memory, and returns a pandas dataframe
 def unzip_csv(zip_file):
-        with ZipFile(BytesIO(zip_file)) as f:
-            df = pd.read_csv(
-                f.open(f.filelist[0]), delimiter='\t', names=csv_headers)
-            return(df)
+    with ZipFile(BytesIO(zip_file)) as f:
+        df = pd.read_csv(
+            f.open(f.filelist[0]), delimiter='\t', names=csv_headers)
+        return(df)
 
 # Gets the zip url from GDELTv2
 def get_zip_url():
@@ -43,10 +47,10 @@ def get_zip_url():
 
 
 # Uses to pandas to filter by country code
-def filter_csv(df):
+def filter_csv(df, file_name=f'./data/{country_code}_{str(datetime.date.today()).replace("-", "_")}.csv'):
     date_string = str(datetime.date.today()).replace('-', '_')
-    df[df['ActionGeo_CountryCode'] == country_code].to_csv(
-        f'./data/{country_code}_{date_string}.csv', mode='a', header=False, index=False, sep='\t')
+    df[df['ActionGeo_CountryCode'] == country_code].to_csv( file_name, mode='a', header=False, index=False, sep='\t')
+
 
 def main():
     os.makedirs('./data', exist_ok=True)
@@ -59,7 +63,8 @@ def main():
         while True:
             zip_url = get_zip_url()
             if zip_url != last_zip_url:
-                print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] Fetching new data from url:')
+                print(
+                    f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] Fetching new data from url:')
                 print(zip_url)
 
                 r = requests.get(zip_url, headers=req_headers)
@@ -67,14 +72,16 @@ def main():
                 filter_csv(df)
                 last_zip_url = zip_url
             else:
-                print(f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...')
+                print(
+                    f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...')
             time.sleep(5*60)
     elif args.analyze:
         zip_archives = os.listdir(args.analyze)
         for i in zip_archives:
             with open(f"{args.analyze}{i}", "rb") as f:
                 df = unzip_csv(f.read())
-                filter_csv(df)
+                filter_csv(df, args.o)
+
 
 if __name__ == '__main__':
     main()
