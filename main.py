@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+from operator import le
 import os
 import time
+from traceback import print_tb
 import requests
 from zipfile import ZipFile
 from io import BytesIO
@@ -9,13 +11,18 @@ import pandas as pd
 import datetime
 import sys
 import argparse
+import re
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--country', help='two letter country code', default='IZ')
 parser.add_argument(
     '--realtime', help='listen in real time for update', action='store_true')
 parser.add_argument(
-    '--analyze', help='sum the integers (default: find the max)')
+    '--analyze', help='provide a folder of gdelt translated v2 zip files')
+parser.add_argument('-n', '--number',
+                    help='the number of entries in the output')
+parser.add_argument('-d', '--start-date',
+                    help='date to at which to start ex. 20150224081500')
 parser.add_argument(
     '-o', help='select output file')
 args = parser.parse_args()
@@ -32,6 +39,8 @@ csv_headers = ['GLOBALEVENTID', 'SQLDATE', 'MonthYear', 'Year', 'FractionDate', 
 country_code = args.country.upper()
 
 # Unzips in memory, and returns a pandas dataframe
+
+
 def unzip_csv(zip_file):
     with ZipFile(BytesIO(zip_file)) as f:
         df = pd.read_csv(
@@ -39,18 +48,25 @@ def unzip_csv(zip_file):
         return(df)
 
 # Gets the zip url from GDELTv2
+
+
 def get_zip_url():
     r = requests.get(last_update_url,
                      headers=req_headers)
     zip_url = r.text.split('/n')[0].split(' ')[2].split('\n')[0]
     return(zip_url)
 
+number_written = 0
 
 # Uses to pandas to filter by country code
 def filter_csv(df, file_name=f'./data/{country_code}_{str(datetime.date.today()).replace("-", "_")}.csv'):
     date_string = str(datetime.date.today()).replace('-', '_')
-    df[df['ActionGeo_CountryCode'] == country_code].to_csv( file_name, mode='a', header=False, index=False, sep='\t')
-
+    df = df[df['ActionGeo_CountryCode'] == country_code]
+    # number_written += int(df.shape[0])
+    df['SQLDATE'] = pd.to_datetime(df['SQLDATE'], format='%Y%m%d')
+    print(df)
+    # df.to_csv(
+    #     file_name, mode='a', header=False, index=False, sep='\t')
 
 def main():
     os.makedirs('./data', exist_ok=True)
@@ -76,7 +92,17 @@ def main():
                     f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...')
             time.sleep(5*60)
     elif args.analyze:
-        zip_archives = os.listdir(args.analyze)
+        zip_archives = sorted(os.listdir(args.analyze))
+
+        try:
+            for idx, val in enumerate(zip_archives):
+                if len(re.findall(args.start_date + r'*', val)) == 1:
+                    zip_archives =zip_archives[idx:]
+                    break
+        except:
+            print("Date not found")
+            exit()
+
         for i in zip_archives:
             with open(f"{args.analyze}{i}", "rb") as f:
                 df = unzip_csv(f.read())
