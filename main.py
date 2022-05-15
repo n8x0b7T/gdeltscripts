@@ -4,6 +4,7 @@ from operator import le
 import os
 import time
 from traceback import print_tb
+from typing import final
 import requests
 from zipfile import ZipFile
 from io import BytesIO
@@ -12,8 +13,11 @@ import datetime
 import sys
 import argparse
 import re
+from itertools import groupby
+import csv
+import random
 
-parser = argparse.ArgumentParser(description='Process some integers.')
+parser = argparse.ArgumentParser()
 parser.add_argument('--country', help='two letter country code', default='IZ')
 parser.add_argument(
     '--realtime', help='listen in real time for update', action='store_true')
@@ -41,10 +45,13 @@ country_code = args.country.upper()
 # Unzips in memory, and returns a pandas dataframe
 
 
+def get_df(x):
+    return pd.read_csv(x, delimiter='\t', names=csv_headers)
+
+
 def unzip_csv(zip_file):
     with ZipFile(BytesIO(zip_file)) as f:
-        df = pd.read_csv(
-            f.open(f.filelist[0]), delimiter='\t', names=csv_headers)
+        df = get_df(f.open(f.filelist[0]))
         return(df)
 
 # Gets the zip url from GDELTv2
@@ -56,17 +63,24 @@ def get_zip_url():
     zip_url = r.text.split('/n')[0].split(' ')[2].split('\n')[0]
     return(zip_url)
 
+
 number_written = 0
 
 # Uses to pandas to filter by country code
-def filter_csv(df, file_name=f'./data/{country_code}_{str(datetime.date.today()).replace("-", "_")}.csv'):
-    date_string = str(datetime.date.today()).replace('-', '_')
+
+
+def filter_csv(df, file_name='.tempfile.csv'):
+    if args.realtime:
+        file_name = f'./data/{country_code}_{str(datetime.date.today()).replace("-", "_")}.csv'
     df = df[df['ActionGeo_CountryCode'] == country_code]
+
     # number_written += int(df.shape[0])
-    df['SQLDATE'] = pd.to_datetime(df['SQLDATE'], format='%Y%m%d')
-    print(df)
-    # df.to_csv(
-    #     file_name, mode='a', header=False, index=False, sep='\t')
+    # df['SQLDATE'] = pd.to_datetime(df['SQLDATE'], format='%Y%m%d')
+    # print(df)
+
+    df.to_csv(
+        file_name, mode='a', header=False, index=False, sep='\t')
+
 
 def main():
     os.makedirs('./data', exist_ok=True)
@@ -91,22 +105,43 @@ def main():
                 print(
                     f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...')
             time.sleep(5*60)
+
     elif args.analyze:
         zip_archives = sorted(os.listdir(args.analyze))
+        if args.start_date is not None:
+            try:
+                for idx, val in enumerate(zip_archives):
+                    if len(re.findall(args.start_date + r'*', val)) == 1:
+                        zip_archives = zip_archives[idx:]
+                        break
+            except:
+                print("Date not found")
+                exit()
 
-        try:
-            for idx, val in enumerate(zip_archives):
-                if len(re.findall(args.start_date + r'*', val)) == 1:
-                    zip_archives =zip_archives[idx:]
-                    break
-        except:
-            print("Date not found")
-            exit()
-
+        tempfile_name = '.tempfile.csv'
         for i in zip_archives:
             with open(f"{args.analyze}{i}", "rb") as f:
                 df = unzip_csv(f.read())
-                filter_csv(df, args.o)
+                filter_csv(df, tempfile_name)
+
+        entries = csv.reader(open(tempfile_name, 'r'), delimiter='\t')
+        os.remove(tempfile_name)
+        def group_function(x): return x[1][:-2]
+        day_groups = groupby(
+            sorted(entries, key=group_function), group_function)
+        number_to_select = 1
+        final_selection = []
+        for i in day_groups:
+            the_list = list(i[1])
+            # print(len(the_list))
+            print(f'{len(the_list)} <= {number_to_select}')
+            if len(the_list) <= number_to_select:
+                final_selection += the_list
+            else:
+                final_selection += random.sample(the_list, number_to_select)
+
+        print(final_selection)
+        # df = get_df(tempfile_name)
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '-u', '--update', help='update the database',  action='store_true')    
 parser.add_argument(
-    '-o', '--ouptut', help='update the database',  action='store_true', default="./archives/")
+    '-o', '--output', help='choose a folder to store data',  action='store_true', default="./archives/")
 args = parser.parse_args()
 
 master_list = 'http://data.gdeltproject.org/gdeltv2/masterfilelist-translation.txt'
@@ -33,7 +33,7 @@ if args.update:
 
 def get_csv(url):
     r = requests.get(url)
-    with open(args.o + url.split('/')[-1], 'wb') as f:
+    with open(args.output + url.split('/')[-1], 'wb') as f:
         f.write(r.content)
 
 def splitv2(x):
@@ -51,7 +51,7 @@ def download_archives():
                 urls.append(url)
 
     for idx, val in enumerate(urls):
-        if not os.path.isfile(args.o + val.split('/')[-1]):
+        if not os.path.isfile(args.output + val.split('/')[-1]):
             print(f'Downloading {idx+1}/{len(urls)} archives', end='\r')
             get_csv(val)
     print()
