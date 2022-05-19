@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from ast import parse
 from operator import le
 import os
 import time
@@ -27,6 +28,10 @@ parser.add_argument('-n', '--number',
                     help='the number of entries in the output')
 parser.add_argument('-d', '--start-date',
                     help='date to at which to start ex. 20150224081500')
+parser.add_argument(
+    '--max-number', help='specify max number of entries to get', default=500)
+parser.add_argument('--per-day', help='specify the number to get per day')
+parser.add_argument('--per-month', help='specify the number to get per month')
 parser.add_argument(
     '-o', help='select output file')
 args = parser.parse_args()
@@ -125,23 +130,53 @@ def main():
                 filter_csv(df, tempfile_name)
 
         entries = csv.reader(open(tempfile_name, 'r'), delimiter='\t')
-        os.remove(tempfile_name)
-        def group_function(x): return x[1][:-2]
-        day_groups = groupby(
-            sorted(entries, key=group_function), group_function)
-        number_to_select = 1
+
+        groups = []
+
+        # How many to get per month or day
+        if args.per_day is not None:
+            number_to_select = int(args.per_day)
+            # group by day
+            def group_function(x): return x[1]
+            groups = groupby(
+                sorted(entries, key=group_function), group_function)
+            args.per_month = None
+
+        elif args.per_month is not None:
+            number_to_select = int(args.per_month)
+            # group by month
+            def group_function(x): return x[1][:-2]
+            groups = groupby(
+                sorted(entries, key=group_function), group_function)
+        else:
+            number_to_select = 1
+            def group_function(x): return x[1][:-2]
+            groups = groupby(
+                sorted(entries, key=group_function), group_function)
+
         final_selection = []
-        for i in day_groups:
+        for i in groups:
+            if len(final_selection) > abs(int(args.max_number)):
+                break
             the_list = list(i[1])
-            # print(len(the_list))
-            print(f'{len(the_list)} <= {number_to_select}')
+            # print(f'{len(the_list)} <= {number_to_select}')
             if len(the_list) <= number_to_select:
                 final_selection += the_list
             else:
                 final_selection += random.sample(the_list, number_to_select)
 
-        print(final_selection)
-        # df = get_df(tempfile_name)
+        if args.o is not None:
+            with open(args.o, "w") as f:
+                csv_writer = csv.writer(f, delimiter='\t')
+                csv_writer.writerows(final_selection)
+        else:
+            for i in final_selection:
+                print(i + "\n")
+
+        print(
+            f'Found {len(final_selection)} entries\nStarting from {final_selection[0][1]}\nEnding on {final_selection[-1][1]}')
+
+        os.remove(tempfile_name)
 
 
 if __name__ == '__main__':
