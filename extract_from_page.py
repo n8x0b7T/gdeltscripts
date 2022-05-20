@@ -25,7 +25,7 @@ config = Config()
 config.headers = req_headers
 config.request_timeout = 10
 
-f = csv.reader(open('./a.csv'), delimiter='\t')
+f = csv.reader(open('./output.csv'), delimiter='\t')
 
 def de_duplicate_url(x):
     res = []
@@ -57,7 +57,6 @@ with open("extracted_text.csv", 'w') as file:
     csvwriter = csv.writer(file, delimiter="\t")
     for i in f:
         content = parse_site(i)
-        if content != False:
-            print(i[-1])
+        if content != False and content[2] != '':
             print(content)
             csvwriter.writerow(content)
