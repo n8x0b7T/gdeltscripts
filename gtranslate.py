@@ -5,15 +5,18 @@ from googletrans import Translator
 translator = Translator()
 
 translated_text = []
-grams = ['Hello my name is Zac.', 'Google translate is easy to use.']
 
 f = csv.reader(open('./extracted_text.csv'), delimiter='\t')
+output_csv = csv.writer(open("translated.csv", "w"), delimiter="\t")
 
 for g in f:
     time.sleep(3)
-    # print(len(g[3]))
-    # translated_text.append(translator.translate("hola", dest='en', src='es'))
-    print("\n\n\n\n\n", translator.translate(g[3], dest='en').text)
+    try:
+        translation = translator.translate(f'{g[2]}>>>>{g[3]}', dest='en').text.split('>>>>')
+        to_write = g
+        to_write[2] = translation[0]
+        to_write[3] = translation[1]
+        output_csv.writerow(to_write)
+    except:
+        pass
 
-for t in translated_text:
-    print('English: ', t.origin, '  ----->  ', 'Spanish: ', t.text)

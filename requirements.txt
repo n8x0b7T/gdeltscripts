@@ -1,5 +1,4 @@
 pandas
-pycountry
 newspaper3k
 rake_nltk
 googletrans==4.0.0rc1
