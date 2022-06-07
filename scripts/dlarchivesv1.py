@@ -5,10 +5,14 @@ import requests
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    '-u', '--update', help='update the database',  action='store_true')    
-parser.add_argument(
-    '-o', help='update the database',  action='store_true', default="./archivesV1/")
+parser.add_argument('-u',
+                    '--update',
+                    help='update the database',
+                    action='store_true')
+parser.add_argument('-o',
+                    help='update the database',
+                    action='store_true',
+                    default="./archivesV1/")
 args = parser.parse_args()
 
 master_list = 'http://data.gdeltproject.org/events/index.html'
@@ -37,8 +41,10 @@ def get_csv(url):
     with open(args.o + url.split('/')[-1], 'wb') as f:
         f.write(r.content)
 
+
 def splitv1(x):
     return x.split('HREF="')[1].split('"')[0]
+
 
 def download_archives():
     urls = []

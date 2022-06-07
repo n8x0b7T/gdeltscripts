@@ -5,10 +5,15 @@ import requests
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    '-u', '--update', help='update the database',  action='store_true')    
-parser.add_argument(
-    '-o', '--output', help='choose a folder to store data',  action='store_true', default="./archives/")
+parser.add_argument('-u',
+                    '--update',
+                    help='update the database',
+                    action='store_true')
+parser.add_argument('-o',
+                    '--output',
+                    help='choose a folder to store data',
+                    action='store_true',
+                    default="./archives/")
 args = parser.parse_args()
 
 master_list = 'http://data.gdeltproject.org/gdeltv2/masterfilelist-translation.txt'
@@ -36,11 +41,14 @@ def get_csv(url):
     with open(args.output + url.split('/')[-1], 'wb') as f:
         f.write(r.content)
 
+
 def splitv2(x):
     return x.split(' ')[-1].replace('\n', '')
 
+
 def splitv1(x):
     return ""
+
 
 def download_archives():
     urls = []

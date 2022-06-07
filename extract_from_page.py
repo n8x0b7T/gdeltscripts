@@ -25,7 +25,7 @@ config = Config()
 config.headers = req_headers
 config.request_timeout = 10
 
-f = csv.reader(open('./output.csv'), delimiter='\t')
+f = csv.reader(open('./stuff.csv'), delimiter='\t')
 
 def de_duplicate_url(x):
     res = []
@@ -49,7 +49,10 @@ def parse_site(x):
         article.download()
         article.parse()
 
-        return [x[37], make_safe(article.title), make_safe(article.text), url]
+        if len(make_safe(article.text)) > 70:
+            return [x[0], x[37], make_safe(article.title), make_safe(article.text), url]
+        else:
+            return False
     except:
         return False
 
