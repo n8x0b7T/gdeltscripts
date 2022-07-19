@@ -56,8 +56,8 @@ def parse_site(x):
     except:
         return False
 
-with open("extracted_text.csv", 'w') as file:
-    csvwriter = csv.writer(file, delimiter="\t")
+with open('extracted_text.csv', 'w') as file:
+    csvwriter = csv.writer(file, delimiter='\t')
     for i in f:
         content = parse_site(i)
         if content != False and content[2] != '':

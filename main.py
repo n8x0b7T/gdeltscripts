@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 
-from ast import parse
-from operator import le
 import os
 import time
-from traceback import print_tb
-from typing import final
 import requests
 from zipfile import ZipFile
 from io import BytesIO
