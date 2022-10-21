@@ -4,3 +4,4 @@ rake_nltk
 googletrans==4.0.0rc1
 camel-tools
 transformers
+modin[all]

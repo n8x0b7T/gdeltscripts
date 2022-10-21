@@ -22,7 +22,7 @@ parser.add_argument('--archives',
                     default='./archives')
 parser.add_argument('-n',
                     '--number',
-                    help='the number of entries in the output')
+                    help='the number of entries in the output', defualt=100)
 parser.add_argument('-d',
                     '--start-date',
                     help='date to at which to start ex. 20150224081500')
@@ -93,20 +93,27 @@ def main():
     df = pd.DataFrame()
     zip_archives_len = len(zip_archives)
     for idx, val in enumerate(zip_archives):
-        # print(f'Processing {idx+1}/{zip_archives_len} archives', end='\r')
+        print(f'Processing {idx+1}/{zip_archives_len} archives', end='\r')
         with open(os.path.join(args.archives, val), "rb") as f:
             df = pd.concat([df, unzip_csv(f)], ignore_index=True)
 
     # convert to modin
-    df = mpd.DataFrame(df)
+    # df = mpd.DataFrame(df)
 
     # filter by country
     df = df[df['ActionGeo_CountryCode'] == country_code]
 
-    #TODO: filter by event code
+    print(len(df), 'fasdf')
 
-    df = df.sample(100)
-    df.to_csv('test.csv')
+    #filter by event code
+    selected_event_codes = [7, 13, 14, 19, 20]
+    df = df[df['EventRootCode'].isin(selected_event_codes)]
+
+    print(len(df))
+
+
+    df = df.sample(int(arg.number))
+    df.to_csv(args.o)
 
 
 if __name__ == '__main__':
