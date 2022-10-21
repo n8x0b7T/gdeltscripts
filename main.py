@@ -22,7 +22,8 @@ parser.add_argument('--archives',
                     default='./archives')
 parser.add_argument('-n',
                     '--number',
-                    help='the number of entries in the output', default=100)
+                    help='the number of entries in the output',
+                    default=0)
 parser.add_argument('-d',
                     '--start-date',
                     help='date to at which to start ex. 20150224081500')
@@ -111,8 +112,9 @@ def main():
 
     print(len(df))
 
+    if args.number != 0:
+        df = df.sample(abs(int(args.number)))
 
-    df = df.sample(int(args.number))
     df.to_csv(args.o)
 
 
