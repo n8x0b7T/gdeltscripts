@@ -6,6 +6,7 @@ import requests
 from zipfile import ZipFile
 from io import BytesIO
 import pandas as pd
+import modin.pandas as mpd
 import datetime
 import sys
 import argparse
@@ -16,22 +17,18 @@ import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--country', help='two letter country code', default='IZ')
-parser.add_argument('--realtime',
-                    help='listen in real time for update',
-                    action='store_true')
-parser.add_argument('--analyze',
-                    help='provide a folder of gdelt translated v2 zip files')
+parser.add_argument('--archives',
+                    help='folder where archives are located',
+                    default='./archives')
 parser.add_argument('-n',
                     '--number',
                     help='the number of entries in the output')
 parser.add_argument('-d',
                     '--start-date',
                     help='date to at which to start ex. 20150224081500')
-parser.add_argument('--max-number',
-                    help='specify max number of entries to get',
-                    default=500)
-parser.add_argument('--per-day', help='specify the number to get per day')
-parser.add_argument('--per-month', help='specify the number to get per month')
+parser.add_argument('--years',
+                    help='how many years of gdelt archive files',
+                    default=".25")
 parser.add_argument('-o', help='select output file')
 args = parser.parse_args()
 
@@ -70,30 +67,8 @@ def get_df(x):
 
 
 def unzip_csv(zip_file):
-    with ZipFile(BytesIO(zip_file)) as f:
-        df = get_df(f.open(f.filelist[0]))
-        return (df)
-
-
-# Get the zip url from GDELTv2
-def get_zip_url():
-    r = requests.get(last_update_url, headers=req_headers)
-    zip_url = r.text.split('/n')[0].split(' ')[2].split('\n')[0]
-    return (zip_url)
-
-
-number_written = 0
-
-
-# Uses pandas to filter by country code
-def filter_csv(df, file_name='.tempfile.csv'):
-    if args.realtime:
-        file_name = f'./data/{country_code}_{str(datetime.date.today()).replace("-", "_")}.csv'
-    df = df[df['ActionGeo_CountryCode'] == country_code]
-    # number_written += int(df.shape[0])
-    # df['SQLDATE'] = pd.to_datetime(df['SQLDATE'], format='%Y%m%d')
-    # print(df)
-    df.to_csv(file_name, mode='a', header=False, index=False, sep='\t')
+    with ZipFile(BytesIO(zip_file.read())) as f:
+        return get_df(f.open(f.filelist[0]))
 
 
 def main():
@@ -102,108 +77,36 @@ def main():
     if len(sys.argv) == 1:
         parser.print_help()
 
-    if args.realtime:
-        last_zip_url = ''
-        while True:
-            zip_url = get_zip_url()
-            if zip_url != last_zip_url:
-                print(
-                    f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] Fetching new data from url:'
-                )
-                print(zip_url)
+    zip_archives = sorted(os.listdir(args.archives))
+    if args.start_date is not None:
+        try:
+            for idx, val in enumerate(zip_archives):
+                if re.findall(f'^{args.start_date}.*', val):
+                    zip_archives = zip_archives[idx:]
+                    break
+        except:
+            print("Date not found")
+            exit()
+    num_files_from_years = int(float(args.years) * 8766 * 4)
+    zip_archives = zip_archives[:num_files_from_years]
 
-                r = requests.get(zip_url, headers=req_headers)
-                df = unzip_csv(r.content)
-                filter_csv(df)
-                last_zip_url = zip_url
-            else:
-                print(
-                    f'[{str(datetime.datetime.now()).split(".")[0:-1][0]}] No new data, trying again soon...'
-                )
-            time.sleep(5 * 60)
+    df = pd.DataFrame()
+    zip_archives_len = len(zip_archives)
+    for idx, val in enumerate(zip_archives):
+        # print(f'Processing {idx+1}/{zip_archives_len} archives', end='\r')
+        with open(os.path.join(args.archives, val), "rb") as f:
+            df = pd.concat([df, unzip_csv(f)], ignore_index=True)
 
-    elif args.analyze:
-        zip_archives = sorted(os.listdir(args.analyze))
-        if args.start_date is not None:
-            try:
-                for idx, val in enumerate(zip_archives):
-                    if re.findall(f'{args.start_date}.*', val):
-                        zip_archives = zip_archives[idx:]
-                        
+    # convert to modin
+    df = mpd.DataFrame(df)
 
-                        break
-            except:
-                print("Date not found")
-                exit()
+    # filter by country
+    df = df[df['ActionGeo_CountryCode'] == country_code]
 
+    #TODO: filter by event code
 
-        tempfile_name = '.tempfile.csv'
-        for i in zip_archives:
-            
-            with open(os.path.join(args.analyze, i), "rb") as f:
-                df = unzip_csv(f.read())
-                filter_csv(df, tempfile_name)
-
-        entries = csv.reader(open(tempfile_name, 'r'), delimiter='\t')
-
-        groups = []
-
-        # How many to get per month or day
-        if args.per_day is not None:
-            number_to_select = int(args.per_day)
-
-            # group by day
-            def group_function(x):
-                return x[1]
-
-            groups = groupby(sorted(entries, key=group_function),
-                             group_function)
-            args.per_month = None
-
-        elif args.per_month is not None:
-            number_to_select = int(args.per_month)
-
-            # group by month IZ
-            def group_function(x):
-                return x[1][:-2]
-
-            groups = groupby(sorted(entries, key=group_function),
-                             group_function)
-        else:
-            number_to_select = 1
-
-            def group_function(x):
-                return x[1][:-2]
-
-            groups = groupby(sorted(entries, key=group_function),
-                             group_function)
-
-        final_selection = []
-        for i in groups:
-            if len(final_selection) > abs(int(args.max_number)):
-                break
-            the_list = list(i[1])
-            # print(f'{len(the_list)} <= {number_to_select}')
-            try:            
-                if len(the_list) <= number_to_select:
-                    final_selection += the_list
-                    final_selection += random.sample(the_list, number_to_select)
-            except Exception as e:
-                print('bruh')
-
-        if args.o is not None:
-            with open(args.o, "w") as f:
-                csv_writer = csv.writer(f, delimiter='\t')
-                csv_writer.writerows(final_selection)
-        else:
-            for i in final_selection:
-                print(i + "\n")
-
-        print(
-            f'Found {len(final_selection)} entries\nStarting from {final_selection[0][1]}\nEnding on {final_selection[-1][1]}'
-        )
-
-        os.remove(tempfile_name)
+    df = df.sample(100)
+    df.to_csv('test.csv')
 
 
 if __name__ == '__main__':
