@@ -16,15 +16,17 @@ accepted_lang='ar'
 
 translated_text = []
 
-f = csv.reader(open(args.articles), delimiter='\t')
+f = list(csv.reader(open(args.articles), delimiter='\t'))
 # filter out short articles
-f = [i for i in f if len(i[3]) > 800]
+
+f = [i for i in f if len(i[3]) > 100]
 
 
-output_csv = csv.writer(open('translated.csv', 'w'), delimiter='\t')
+output_csv = csv.writer(open(args.output, 'w'), delimiter='\t')
 
 for idx, val in enumerate(f):
     print(f'Translating {idx+1}/{len(f)} articles', end='\r')
+    print(val)
     time.sleep(random.random()*1.8)
     try:
         t = translator.translate(f'{val[2]}>>>>{val[3]}', dest='en')

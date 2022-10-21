@@ -127,16 +127,20 @@ def main():
         if args.start_date is not None:
             try:
                 for idx, val in enumerate(zip_archives):
-                    if len(re.findall(args.start_date + r'*', val)) == 1:
+                    if re.findall(f'{args.start_date}.*', val):
                         zip_archives = zip_archives[idx:]
+                        
+
                         break
             except:
                 print("Date not found")
                 exit()
 
+
         tempfile_name = '.tempfile.csv'
         for i in zip_archives:
-            with open(f"{args.analyze}{i}", "rb") as f:
+            
+            with open(os.path.join(args.analyze, i), "rb") as f:
                 df = unzip_csv(f.read())
                 filter_csv(df, tempfile_name)
 
@@ -159,7 +163,7 @@ def main():
         elif args.per_month is not None:
             number_to_select = int(args.per_month)
 
-            # group by month
+            # group by month IZ
             def group_function(x):
                 return x[1][:-2]
 
@@ -180,9 +184,12 @@ def main():
                 break
             the_list = list(i[1])
             # print(f'{len(the_list)} <= {number_to_select}')
-            if len(the_list) <= number_to_select:
-                final_selection += the_list
-                final_selection += random.sample(the_list, number_to_select)
+            try:            
+                if len(the_list) <= number_to_select:
+                    final_selection += the_list
+                    final_selection += random.sample(the_list, number_to_select)
+            except Exception as e:
+                print('bruh')
 
         if args.o is not None:
             with open(args.o, "w") as f:
