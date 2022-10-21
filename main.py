@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 
 import os
-import time
-import requests
 from zipfile import ZipFile
 from io import BytesIO
 import pandas as pd
 import modin.pandas as mpd
-import datetime
 import sys
 import argparse
 import re
-from itertools import groupby
-import csv
-import random
+from multiprocessing import Pool
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--country', help='two letter country code', default='IZ')
@@ -69,6 +64,7 @@ def get_df(x):
 
 def unzip_csv(zip_file):
     with ZipFile(BytesIO(zip_file.read())) as f:
+        return f.open(f.filelist[0]).read().split('\n')[:-1]
         return get_df(f.open(f.filelist[0]))
 
 

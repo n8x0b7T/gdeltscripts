@@ -5,4 +5,4 @@ def f(x):
 
 if __name__ == '__main__':
     with Pool(5) as p:
-        my_var = p.map(f, [1, 2, 3]) 
+        my_var = p.map(f, range(700000)) 
