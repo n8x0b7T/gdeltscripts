@@ -22,7 +22,7 @@ parser.add_argument('--archives',
                     default='./archives')
 parser.add_argument('-n',
                     '--number',
-                    help='the number of entries in the output', defualt=100)
+                    help='the number of entries in the output', default=100)
 parser.add_argument('-d',
                     '--start-date',
                     help='date to at which to start ex. 20150224081500')
