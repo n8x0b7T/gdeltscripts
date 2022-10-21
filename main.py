@@ -112,7 +112,7 @@ def main():
     print(len(df))
 
 
-    df = df.sample(int(arg.number))
+    df = df.sample(int(args.number))
     df.to_csv(args.o)
 
 
