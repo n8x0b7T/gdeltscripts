@@ -63,9 +63,13 @@ def get_df(x):
 
 
 def unzip_csv(zip_file):
-    with ZipFile(BytesIO(zip_file.read())) as f:
-        return f.open(f.filelist[0]).read().split('\n')[:-1]
-        return get_df(f.open(f.filelist[0]))
+    with open(os.path.join(args.archives, zip_file), "rb") as f:
+        with ZipFile(BytesIO(f.read())) as f2:
+            pbar.update(1)
+            return [ i.split('\t') for i in f2.read(f2.filelist[0]).decode('utf-8').split('\n')[:-1]]
+            return pd.DataFrame(split)
+            return 0
+            return get_df(f.open(f.filelist[0]))
 
 
 def main():
@@ -100,18 +104,20 @@ def main():
     # filter by country
     df = df[df['ActionGeo_CountryCode'] == country_code]
 
-    print(len(df), 'fasdf')
+    # print(len(df), 'fasdf')
 
-    #filter by event code
-    selected_event_codes = [7, 13, 14, 19, 20]
-    df = df[df['EventRootCode'].isin(selected_event_codes)]
+    # filter by event code
+    # selected_event_codes = [7, 13, 14, 19, 20]
+    df = df[df['EventRootCode'] == 14]
 
     print(len(df))
 
     if args.number != 0:
         df = df.sample(abs(int(args.number)))
 
-    df.to_csv(args.o)
+    # save the most usefule columns
+    write_columns = ['GLOBALEVENTID', 'SQLDATE', 'GoldsteinScale', 'SOURCEURL']
+    df[write_columns].to_csv(args.o)
 
 
 if __name__ == '__main__':
