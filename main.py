@@ -11,7 +11,7 @@ import sys
 import argparse
 import re
 from multiprocessing import Pool
-from tqdm import tqdm
+from alive_progress import alive_bar
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--country', help='two letter country code', default='IZ')
@@ -31,7 +31,7 @@ parser.add_argument('--years',
 parser.add_argument('-o', help='select output file')
 args = parser.parse_args()
 
-last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate.txt'
+# last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate.txt'
 last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate-translation.txt'
 
 req_headers = {'User-Agent': 'Mozilla/5.0'}
@@ -59,26 +59,7 @@ csv_headers = [
 
 country_code = args.country.upper()
 
-pbar = tqdm()
-
-# Unzip in memory, and returns a pandas dataframe
-def get_df(x):
-    return pd.read_csv(x, delimiter='\t', names=csv_headers)
-
-
-def unzip_csv(zip_file):
-    with open(os.path.join(args.archives, zip_file), "rb") as f:
-        with ZipFile(BytesIO(f.read())) as f2:
-            pbar.update(1)
-            return [ i.split('\t') for i in f2.read(f2.filelist[0]).decode('utf-8').split('\n')[:-1]]
-            return pd.DataFrame(split)
-            return 0
-            return get_df(f.open(f.filelist[0]))
-
-
 def main():
-    os.makedirs('./data', exist_ok=True)
-
     if len(sys.argv) == 1:
         parser.print_help()
 
@@ -95,39 +76,33 @@ def main():
     num_files_from_years = int(float(args.years) * 8766 * 4)
     zip_archives = zip_archives[:num_files_from_years]
 
-    pbar = tqdm(total=len(zip_archives), bar_format='{l_bar}')
-
-    with Pool(5) as p:
-        result = p.map(unzip_csv, zip_archives)
-        result = [j for i in result for j in i]
-
-    df = pd.DataFrame(result, columns=csv_headers)
-
-    # for idx, val in enumerate(zip_archives):
-    #     print(f'Processing {idx+1}/{zip_archives_len} archives', end='\r')
-    #     with open(os.path.join(args.archives, val), "rb") as f:
-    #         df = pd.concat([df, unzip_csv(f)], ignore_index=True)
-    #         f.close()
-
+    with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
+        # Read the files into dataframes
+        df = pd.DataFrame(columns=csv_headers)
+        # try:
+        for i in zip_archives:
+            # print(i)
+            df = pd.concat([df, pd.read_csv(os.path.join(
+                args.archives, i), delimiter='\t', names=csv_headers)])
+            bar()
 
     # filter by country
     df = df[df['ActionGeo_CountryCode'] == country_code]
 
-    # print(len(df), 'fasdf')
-
     # filter by event code
-    # selected_event_codes = [7, 13, 14, 19, 20]
     df = df[df['EventRootCode'] == 14]
 
     if args.number != 0:
         df = df.sample(abs(int(args.number)))
 
-    write_columns = ['GLOBALEVENTID', 'SQLDATE', 'GoldsteinScale', 'SOURCEURL']
+
+    write_columns = ['GLOBALEVENTID', 'SQLDATE',
+                     'GoldsteinScale', 'EventRootCode', 'ActionGeo_CountryCode', 'SOURCEURL']
     if args.o is not None:
         df[write_columns].to_csv(args.o)
     else:
         df[write_columns].to_csv(input("Save the file to: "))
-    #TODO: format date
+    # TODO: format date
     print(
         f"Got {len(df)} items from {zip_archives[0].split('.')[0]} to {zip_archives[-1].split('.')[0]}"
     )
