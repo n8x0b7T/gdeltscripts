@@ -4,11 +4,14 @@ import os
 from zipfile import ZipFile
 from io import BytesIO
 import pandas as pd
-import modin.pandas as mpd
+# import modin.pandas as pd
+import csv
+from io import StringIO
 import sys
 import argparse
 import re
 from multiprocessing import Pool
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--country', help='two letter country code', default='IZ')
@@ -56,6 +59,7 @@ csv_headers = [
 
 country_code = args.country.upper()
 
+pbar = tqdm()
 
 # Unzip in memory, and returns a pandas dataframe
 def get_df(x):
@@ -91,15 +95,20 @@ def main():
     num_files_from_years = int(float(args.years) * 8766 * 4)
     zip_archives = zip_archives[:num_files_from_years]
 
-    df = pd.DataFrame()
-    zip_archives_len = len(zip_archives)
-    for idx, val in enumerate(zip_archives):
-        print(f'Processing {idx+1}/{zip_archives_len} archives', end='\r')
-        with open(os.path.join(args.archives, val), "rb") as f:
-            df = pd.concat([df, unzip_csv(f)], ignore_index=True)
+    pbar = tqdm(total=len(zip_archives), bar_format='{l_bar}')
 
-    # convert to modin
-    # df = mpd.DataFrame(df)
+    with Pool(5) as p:
+        result = p.map(unzip_csv, zip_archives)
+        result = [j for i in result for j in i]
+
+    df = pd.DataFrame(result, columns=csv_headers)
+
+    # for idx, val in enumerate(zip_archives):
+    #     print(f'Processing {idx+1}/{zip_archives_len} archives', end='\r')
+    #     with open(os.path.join(args.archives, val), "rb") as f:
+    #         df = pd.concat([df, unzip_csv(f)], ignore_index=True)
+    #         f.close()
+
 
     # filter by country
     df = df[df['ActionGeo_CountryCode'] == country_code]
@@ -110,14 +119,18 @@ def main():
     # selected_event_codes = [7, 13, 14, 19, 20]
     df = df[df['EventRootCode'] == 14]
 
-    print(len(df))
-
     if args.number != 0:
         df = df.sample(abs(int(args.number)))
 
-    # save the most usefule columns
     write_columns = ['GLOBALEVENTID', 'SQLDATE', 'GoldsteinScale', 'SOURCEURL']
-    df[write_columns].to_csv(args.o)
+    if args.o is not None:
+        df[write_columns].to_csv(args.o)
+    else:
+        df[write_columns].to_csv(input("Save the file to: "))
+    #TODO: format date
+    print(
+        f"Got {len(df)} items from {zip_archives[0].split('.')[0]} to {zip_archives[-1].split('.')[0]}"
+    )
 
 
 if __name__ == '__main__':
