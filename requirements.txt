@@ -1,7 +1,6 @@
 pandas
 newspaper3k
-rake_nltk
+alive-progress
 googletrans==4.0.0rc1
 camel-tools
 transformers
-alive-progress

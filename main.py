@@ -5,6 +5,7 @@ import sys
 import argparse
 import re
 from alive_progress import alive_bar
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pandas as pd
 # import modin.pandas as pd
@@ -57,6 +58,7 @@ csv_headers = [
 
 country_code = args.country.upper()
 
+
 def main():
     if len(sys.argv) == 1:
         parser.print_help()
@@ -74,14 +76,34 @@ def main():
     num_files_from_years = int(float(args.years) * 8766 * 4)
     zip_archives = zip_archives[:num_files_from_years]
 
+    def open_csv(name):
+        return pd.read_csv(os.path.join(
+            args.archives, name), delimiter='\t', names=csv_headers)
+
+    # with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
+    #     # Read the files into dataframes
+    #     df = pd.DataFrame(columns=csv_headers)
+    #     # try:
+    #     for i in zip_archives:
+    #         # print(i)
+    #         df = pd.concat([df, ])
+    #         bar()
+
+    dfs = []
     with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
-        # Read the files into dataframes
-        df = pd.DataFrame(columns=csv_headers)
-        # try:
-        for i in zip_archives:
-            # print(i)
-            df = pd.concat([df, pd.read_csv(os.path.join(
-                args.archives, i), delimiter='\t', names=csv_headers)])
+        with ThreadPoolExecutor(max_workers=30) as pool:
+            futures = [pool.submit(open_csv, work)
+                       for work in zip_archives]
+            for result in as_completed(futures):
+                dfs.append(result.result())
+                bar()
+    # dfs = [i for i in dfs if i is not None]
+
+    df = pd.DataFrame(columns=csv_headers)
+
+    with alive_bar(len(dfs), dual_line=True, title="Concatenating CSVs") as bar:
+        for i in dfs:
+            df = pd.concat([df, i])
             bar()
 
     # filter by country
@@ -95,7 +117,6 @@ def main():
 
     if args.number != 0:
         df = df.sample(abs(int(args.number)))
-
 
     write_columns = ['GLOBALEVENTID', 'SQLDATE',
                      'GoldsteinScale', 'EventRootCode', 'ActionGeo_CountryCode', 'SOURCEURL']
