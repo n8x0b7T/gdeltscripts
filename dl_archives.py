@@ -52,6 +52,10 @@ def splitv2(x):
 def splitv1(x):
     return ""
 
+def dl_archive(val):
+    if not os.path.isfile(args.o + val.split('/')[-1]) and not os.path.isfile(args.o + val.split('/')[-1].replace('.zip', '')):
+                get_csv(val)
+
 
 def download_archives():
     urls = []
@@ -61,11 +65,19 @@ def download_archives():
             if 'export' in url:
                 urls.append(url)
     with alive_bar(len(urls), dual_line=True, title="Downloading CSVs") as bar:
-        for idx, val in enumerate(urls):
-            if not os.path.isfile(args.o + val.split('/')[-1]) and not os.path.isfile(args.o + val.split('/')[-1].replace('.zip', '')):
-                # print(f'Downloading {idx+1}/{len(urls)} archives', end='\r')
-                get_csv(val)
-            bar()
+        with ThreadPoolExecutor(max_workers=20) as pool:
+            futures = [pool.submit(get_csv, work) for work in urls]
+            for result in as_completed(futures):
+                bar()
+
+        # for idx, val in enumerate(urls):
+        #     if not os.path.isfile(args.o + val.split('/')[-1]) and not os.path.isfile(args.o + val.split('/')[-1].replace('.zip', '')):
+        #         # print(f'Downloading {idx+1}/{len(urls)} archives', end='\r')
+        #         get_csv(val)
+        #     bar()
+
+
+
 
 def unzip_file(file):
     with zipfile.ZipFile(os.path.join(args.o, file), "r") as f:
