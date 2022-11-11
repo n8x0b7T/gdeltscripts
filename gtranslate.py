@@ -66,19 +66,14 @@ if __name__ == '__main__':
     df = pd.read_csv(args.input)
     print(len(df))
 
+    # filter for arabic
     df['is_arabic'] = df.apply(lambda row: is_arabic(row['body']), axis=1)
-    # print(df['is_arabic'])
-
     index_names = df[df['is_arabic'] == False].index
-
     df.drop(index_names, inplace=True)
     df.drop(['is_arabic'], axis=1, inplace=True)
 
     print(df)
 
-    # print(is_arabic(df.iloc[6]['body'][1]))
-
-    exit()
     dfs = []
     with alive_bar(len(df), dual_line=True, title="Translating Text") as bar:
         with ThreadPoolExecutor(max_workers=1) as pool:
