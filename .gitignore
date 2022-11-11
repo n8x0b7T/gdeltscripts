@@ -3,5 +3,6 @@
 *.json
 *.zip
 *.txt
+*.bak
 data
 __pycache__

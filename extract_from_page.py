@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-import requests
 import re
-import csv
 from newspaper import Article
 from newspaper import Config
+import pandas as pd
+import argparse
+from alive_progress import alive_bar
+# from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 req_headers = {
@@ -23,43 +25,66 @@ req_headers = {
 
 config = Config()
 config.headers = req_headers
-config.request_timeout = 10
+config.request_timeout = 5
 
-f = csv.reader(open('./300_entries.csv'), delimiter='\t')
 
-def de_duplicate_url(x):
-    res = []
-    urls = []
-    for i in x:
-        if i[-1] not in urls:
-            res.append(i)
-            urls.append(i[-1])
-    return(res)
+parser = argparse.ArgumentParser()
+parser.add_argument('-o', help='select output file')
+parser.add_argument('-i', help='select input file', required=True)
+parser.add_argument('-min-len', default=50, help='select input file')
+args = parser.parse_args()
 
-f = de_duplicate_url(f)
 
 def make_safe(x):
     text = x.replace('\n', '').replace('\t', '')
     return (re.sub(r'[^\w\-\. ]', '', x))
 
-def parse_site(x):
-    url = x[-1]
-    article = Article(url, config=config)
-    try:
-        article.download()
-        article.parse()
 
-        if len(make_safe(article.text)) > 70:
-            return [x[0], x[37], make_safe(article.title), make_safe(article.text), url]
-        else:
-            return False
-    except:
-        return False
+def parse_sites(df):
+    # set up columns
+    columns = df.columns.to_list()
+    columns += ['title', 'body']
 
-with open('300_extracted.csv', 'w') as file:
-    csvwriter = csv.writer(file, delimiter='\t')
-    for i in f:
-        content = parse_site(i)
-        if content != False and content[2] != '':
-            print(content)
-            csvwriter.writerow(content)
+    df_return = pd.DataFrame(columns=columns)
+    df = df.to_dict('records')
+
+    with alive_bar(len(df), dual_line=True, title="Extracting Text") as bar:
+        for row in df:
+            url = row['SOURCEURL']
+            article = Article(url, config=config)
+            try:
+                article.download()
+                article.parse()
+                body = make_safe(article.text)
+                title = make_safe(article.title)
+                # print(body)
+                if len(body) > args.min_len:
+                    row['body'] = body
+                    row['title'] = title
+                    df_return = pd.concat(
+                        [df_return, pd.DataFrame.from_dict(row, orient='index').T], axis=0)
+            except:
+                pass
+            bar()
+
+    return df_return
+
+
+if __name__ == "__main__":
+    df = pd.read_csv(args.i)
+    df = df.drop_duplicates(subset=['SOURCEURL'], keep='first')
+
+    # TODO:multithread?
+    # with ThreadPoolExecutor(max_workers=6) as pool:
+    #     futures = [pool.submit(unzip_file, work) for work in zipped_files]
+    #     for result in as_completed(futures):
+    #         print(result)
+    #         bar()
+
+    out = parse_sites(df)
+    print(out)
+    if args.o is not None:
+        out.to_csv(args.o)
+    else:
+        out.to_csv(input("Save file to: "))
+    print(f"Wrote {len(out)} entries.")

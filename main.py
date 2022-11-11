@@ -3,8 +3,6 @@
 import os
 from zipfile import ZipFile
 from io import BytesIO
-import pandas as pd
-# import modin.pandas as pd
 import csv
 from io import StringIO
 import sys
@@ -12,6 +10,11 @@ import argparse
 import re
 from multiprocessing import Pool
 from alive_progress import alive_bar
+
+import pandas as pd
+# import modin.pandas as pd
+# from modin.config import Engine
+# Engine.put("dask")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--country', help='two letter country code', default='IZ')
@@ -92,6 +95,9 @@ def main():
     # filter by event code
     df = df[df['EventRootCode'] == 14]
 
+    # remove duplicates
+    df = df.drop_duplicates(subset=['SOURCEURL'], keep='first')
+
     if args.number != 0:
         df = df.sample(abs(int(args.number)))
 
@@ -99,9 +105,9 @@ def main():
     write_columns = ['GLOBALEVENTID', 'SQLDATE',
                      'GoldsteinScale', 'EventRootCode', 'ActionGeo_CountryCode', 'SOURCEURL']
     if args.o is not None:
-        df[write_columns].to_csv(args.o)
+        df[write_columns].to_csv(args.o, index=False)
     else:
-        df[write_columns].to_csv(input("Save the file to: "))
+        df[write_columns].to_csv(input("Save the file to: "), index=False)
     # TODO: format date
     print(
         f"Got {len(df)} items from {zip_archives[0].split('.')[0]} to {zip_archives[-1].split('.')[0]}"
