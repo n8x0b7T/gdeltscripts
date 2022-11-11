@@ -33,8 +33,7 @@ def translate_text(row):
 
         if t.src == accepted_lang and not args.no_filter_lang:
             return pd.DataFrame.from_dict(row, orient='index').T
-        else:
-            return pd.DataFrame.from_dict(row, orient='index').T
+
 
     except Exception as e:
         # print(e)
@@ -46,9 +45,9 @@ def translate_text(row):
 
 if __name__ == '__main__':
     df = pd.read_csv(args.input)
-    df = df.sample(30)
+    
     dfs = []
-    with alive_bar(len(df), dual_line=True, title="Extracting Text") as bar:
+    with alive_bar(len(df), dual_line=True, title="Translating Text") as bar:
         with ThreadPoolExecutor(max_workers=1) as pool:
             futures = [pool.submit(translate_text, work)
                        for work in df.to_dict('records')]

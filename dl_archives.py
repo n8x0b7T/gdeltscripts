@@ -70,15 +70,6 @@ def download_archives():
             for result in as_completed(futures):
                 bar()
 
-        # for idx, val in enumerate(urls):
-        #     if not os.path.isfile(args.o + val.split('/')[-1]) and not os.path.isfile(args.o + val.split('/')[-1].replace('.zip', '')):
-        #         # print(f'Downloading {idx+1}/{len(urls)} archives', end='\r')
-        #         get_csv(val)
-        #     bar()
-
-
-
-
 def unzip_file(file):
     with zipfile.ZipFile(os.path.join(args.o, file), "r") as f:
         f.extractall(args.o)
@@ -88,10 +79,6 @@ def unzip_file(file):
 def unzip_archives():
     zipped_files = [i for i in os.listdir(args.o) if i.split('.')[-1] == 'zip']
     with alive_bar(len(zipped_files), dual_line=True, title="Unzipping CSVs") as bar:
-        # with Pool(5) as p:
-        #     futures = p.map(unzip_file, zipped_files)
-        #     for result in as_completed(futures):
-        #         bar()
         with ThreadPoolExecutor(max_workers=6) as pool:
             futures = [pool.submit(unzip_file, work) for work in zipped_files]
             for result in as_completed(futures):

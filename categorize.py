@@ -1,11 +1,22 @@
 from transformers import pipeline
 import csv
 import spacy
+import argparse
+import pandas as pd
 
-sa = pipeline('text-classification', model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-i',
+                    '--input', help='CSV of extracted websites',  required=True)
+parser.add_argument('-o',
+                    '--output',  help='where to write output')
+args = parser.parse_args()
+
+sa = pipeline('text-classification',
+              model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
 nlp = spacy.load("en_core_web_trf")
 
-f= csv.reader(open('with_orig.csv'), delimiter='\t')
+f = csv.reader(open('with_orig.csv'), delimiter='\t')
 
 labels = ['ORG', 'PERSON', 'GPE', 'LOC', 'MONEY', 'LAW', 'EVENT']
 
@@ -29,3 +40,6 @@ for i in f:
 # sentences = ['']
 
 # print(sa(text))
+
+if __name__ == "__main__":
+    df = pd.read_csv(args.input)

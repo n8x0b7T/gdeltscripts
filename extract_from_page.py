@@ -42,14 +42,6 @@ def make_safe(x):
 
 
 def parse_site(row):
-    # set up columns
-    # columns = df.columns.to_list()
-    # columns += ['title', 'body']
-    # print(columns)
-    # df_return = pd.DataFrame(columns=columns)
-    # df = df.to_dict('records')
-
-    # for row in df:
     url = row['SOURCEURL']
     article = Article(url, config=config)
     try:
@@ -57,20 +49,15 @@ def parse_site(row):
         article.parse()
         body = make_safe(article.text)
         title = make_safe(article.title)
-        # print(body)
         if len(body) > args.min_len:
             row['body'] = body
             row['title'] = title
             return pd.DataFrame.from_dict(row, orient='index').T
-            # df_return = pd.concat(
-            #     [df_return, pd.DataFrame.from_dict(row, orient='index').T], axis=0)
     except KeyboardInterrupt:
         exit()
     except:
         pass
     return None
-
-    # return df_return
 
 
 if __name__ == "__main__":

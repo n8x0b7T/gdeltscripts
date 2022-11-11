@@ -79,18 +79,9 @@ def main():
         return pd.read_csv(os.path.join(
             args.archives, name), delimiter='\t', names=csv_headers)
 
-    # with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
-    #     # Read the files into dataframes
-    #     df = pd.DataFrame(columns=csv_headers)
-    #     # try:
-    #     for i in zip_archives:
-    #         # print(i)
-    #         df = pd.concat([df, ])
-    #         bar()
-
     dfs = []
     with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
-        with ThreadPoolExecutor(max_workers=30) as pool:
+        with ThreadPoolExecutor(max_workers=25) as pool:
             futures = [pool.submit(open_csv, work)
                        for work in zip_archives]
             for result in as_completed(futures):
@@ -100,13 +91,10 @@ def main():
 
     df = pd.DataFrame(columns=csv_headers)
 
+    print('Concatenating...')
     df = pd.concat(dfs)
 
-    # with alive_bar(len(dfs), dual_line=True, title="Concatenating CSVs") as bar:
-    #     for i in dfs:
-    #         df = pd.concat([df, i])
-    #         bar()
-
+    print("Filtering...")
     # filter by country
     df = df[df['ActionGeo_CountryCode'] == country_code]
 
