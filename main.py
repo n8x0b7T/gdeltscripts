@@ -6,7 +6,6 @@ import argparse
 import re
 from alive_progress import alive_bar
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 import pandas as pd
 # import modin.pandas as pd
 # from modin.config import Engine
@@ -101,10 +100,12 @@ def main():
 
     df = pd.DataFrame(columns=csv_headers)
 
-    with alive_bar(len(dfs), dual_line=True, title="Concatenating CSVs") as bar:
-        for i in dfs:
-            df = pd.concat([df, i])
-            bar()
+    df = pd.concat(dfs)
+
+    # with alive_bar(len(dfs), dual_line=True, title="Concatenating CSVs") as bar:
+    #     for i in dfs:
+    #         df = pd.concat([df, i])
+    #         bar()
 
     # filter by country
     df = df[df['ActionGeo_CountryCode'] == country_code]

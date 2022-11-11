@@ -4,7 +4,6 @@ import argparse
 import requests
 import os
 import zipfile
-# from multiprocessing import Pool
 from alive_progress import alive_bar
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
