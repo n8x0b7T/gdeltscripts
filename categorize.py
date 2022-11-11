@@ -1,9 +1,15 @@
-from transformers import pipeline
-import csv
-import spacy
-import argparse
-import pandas as pd
 
+import pandas as pd
+import argparse
+import spacy
+import os
+from nltk.corpus import stopwords
+from transformers import pipeline
+nlp = spacy.load("en_core_web_sm")
+
+os.system('clear')
+
+stop_words = set(stopwords.words('english'))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-i',
@@ -14,7 +20,30 @@ args = parser.parse_args()
 
 sa = pipeline('text-classification',
               model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
-nlp = spacy.load("en_core_web_trf")
+
+# print(stop_words)
+
+
+def get_verbs(s):
+    return [i for i in set(
+        [i for i in nlp(s) if i.pos_ == "VERB"])
+         if str(i).lower() not in stop_words]
+
+
+def get_info(row):
+    # print(row['body_tr'])
+    # return
+    # print(sa(row['body_tr'][:450]))
+    print(get_verbs(row['body_tr']))
+
+
+if __name__ == "__main__":
+    df = pd.read_csv(args.input)
+    for i in df.to_dict("records"):
+        get_info(i)
+
+    exit()
+
 
 f = csv.reader(open('with_orig.csv'), delimiter='\t')
 
@@ -40,6 +69,3 @@ for i in f:
 # sentences = ['']
 
 # print(sa(text))
-
-if __name__ == "__main__":
-    df = pd.read_csv(args.input)
