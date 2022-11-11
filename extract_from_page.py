@@ -6,7 +6,7 @@ from newspaper import Config
 import pandas as pd
 import argparse
 from alive_progress import alive_bar
-# from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 req_headers = {
@@ -31,6 +31,7 @@ config.request_timeout = 5
 parser = argparse.ArgumentParser()
 parser.add_argument('-o', help='select output file')
 parser.add_argument('-i', help='select input file', required=True)
+parser.add_argument('-t', help='thread count', default=10)
 parser.add_argument('-min-len', default=50, help='select input file')
 args = parser.parse_args()
 
@@ -40,48 +41,54 @@ def make_safe(x):
     return (re.sub(r'[^\w\-\. ]', '', x))
 
 
-def parse_sites(df):
+def parse_site(row):
     # set up columns
-    columns = df.columns.to_list()
-    columns += ['title', 'body']
+    # columns = df.columns.to_list()
+    # columns += ['title', 'body']
+    # print(columns)
+    # df_return = pd.DataFrame(columns=columns)
+    # df = df.to_dict('records')
 
-    df_return = pd.DataFrame(columns=columns)
-    df = df.to_dict('records')
+    # for row in df:
+    url = row['SOURCEURL']
+    article = Article(url, config=config)
+    try:
+        article.download()
+        article.parse()
+        body = make_safe(article.text)
+        title = make_safe(article.title)
+        # print(body)
+        if len(body) > args.min_len:
+            row['body'] = body
+            row['title'] = title
+            return pd.DataFrame.from_dict(row, orient='index').T
+            # df_return = pd.concat(
+            #     [df_return, pd.DataFrame.from_dict(row, orient='index').T], axis=0)
+    except KeyboardInterrupt:
+        exit()
+    except:
+        pass
+    return None
 
-    with alive_bar(len(df), dual_line=True, title="Extracting Text") as bar:
-        for row in df:
-            url = row['SOURCEURL']
-            article = Article(url, config=config)
-            try:
-                article.download()
-                article.parse()
-                body = make_safe(article.text)
-                title = make_safe(article.title)
-                # print(body)
-                if len(body) > args.min_len:
-                    row['body'] = body
-                    row['title'] = title
-                    df_return = pd.concat(
-                        [df_return, pd.DataFrame.from_dict(row, orient='index').T], axis=0)
-            except:
-                pass
-            bar()
-
-    return df_return
+    # return df_return
 
 
 if __name__ == "__main__":
     df = pd.read_csv(args.i)
     df = df.drop_duplicates(subset=['SOURCEURL'], keep='first')
-
+    # df = df.sample(10)
     # TODO:multithread?
-    # with ThreadPoolExecutor(max_workers=6) as pool:
-    #     futures = [pool.submit(unzip_file, work) for work in zipped_files]
-    #     for result in as_completed(futures):
-    #         print(result)
-    #         bar()
+    dfs = []
+    with alive_bar(len(df), dual_line=True, title="Extracting Text") as bar:
+        with ThreadPoolExecutor(max_workers=int(args.t)) as pool:
+            futures = [pool.submit(parse_site, work)
+                       for work in df.to_dict('records')]
+            for result in as_completed(futures):
+                dfs.append(result.result())
+                bar()
+    dfs = [i for i in dfs if i is not None]
+    out = pd.concat(dfs)
 
-    out = parse_sites(df)
     print(out)
     if args.o is not None:
         out.to_csv(args.o)
