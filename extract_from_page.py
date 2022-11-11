@@ -76,8 +76,7 @@ def parse_site(row):
 if __name__ == "__main__":
     df = pd.read_csv(args.i)
     df = df.drop_duplicates(subset=['SOURCEURL'], keep='first')
-    # df = df.sample(10)
-    # TODO:multithread?
+
     dfs = []
     with alive_bar(len(df), dual_line=True, title="Extracting Text") as bar:
         with ThreadPoolExecutor(max_workers=int(args.t)) as pool:
@@ -91,7 +90,7 @@ if __name__ == "__main__":
 
     print(out)
     if args.o is not None:
-        out.to_csv(args.o)
+        out.to_csv(args.o, index=False)
     else:
-        out.to_csv(input("Save file to: "))
+        out.to_csv(input("Save file to: "), index=False)
     print(f"Wrote {len(out)} entries.")

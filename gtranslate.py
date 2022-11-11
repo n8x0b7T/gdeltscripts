@@ -1,49 +1,81 @@
 import time
-import csv
+# import csv
 from googletrans import Translator
 import argparse
 import random
+import pandas as pd
+from alive_progress import alive_bar
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--articles', help='CSV of extracted websites',  required=True)
-parser.add_argument('--output', '-o', help='where to write output',  default='translated.csv')
+parser.add_argument('-i',
+                    '--input', help='CSV of extracted websites',  required=True)
+parser.add_argument('-o',
+                    '--output',  help='where to write output')
 parser.add_argument('--no-filter-lang', default=False, action='store_true')
 args = parser.parse_args()
 
-translator = Translator(user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0')
+translator = Translator(
+    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0')
 
-accepted_lang='ar'
+accepted_lang = 'ar'
 
-translated_text = []
-the_file = open(args.articles, 'r')
-f = csv.reader(the_file, delimiter='\t')
-f = list(f)
+# translated_text = []
+# the_file = open(args.articles, 'r')
+# f = csv.reader(the_file, delimiter='\t')
+# f = list(f)
 # print(len(list(f)))
 # filter out short articles
 # f = [i for i in f if len(i[3]) > 800]
 
-f = [i for i in f if len(i[3]) > 100]
+# f = [i for i in f if len(i[3]) > 100]
 
 
-output_csv = csv.writer(open(args.output, 'w'), delimiter='\t')
+# output_csv = csv.writer(open(args.output, 'w'), delimiter='\t')
 
-for idx, val in enumerate(f):
-    print(f'Translating {idx+1}/{len(f)} articles', end='\r')
-    print(val)
-    time.sleep(random.random()*1.8)
+
+def translate_text(row):
+    # time.sleep(.5)
     try:
-        t = translator.translate(f'{val[2]}>>>>{val[3]}', dest='en')
-        text = t.text.split('>>>>')
-        to_write = val
+        t = translator.translate(f"{row['title']}>>>>{row['body']}", dest='en')
+        split = t.text.split('>>>>')
+
+        row['body_tr'] = split[-1]
+        row['title_tr'] = split[0]
 
         if t.src == accepted_lang and not args.no_filter_lang:
-            print(t.src)
+            return pd.DataFrame.from_dict(row, orient='index').T
         else:
-            pass
+            return pd.DataFrame.from_dict(row, orient='index').T
 
-        to_write[2] = text[0]
-        to_write[3] = text[1]
-        output_csv.writerow(to_write)
     except Exception as e:
-        print(e)
+        # print(e)
         pass
+    except KeyboardInterrupt:
+        exit()
+    return None
+
+
+# df['new_var'] = df.apply(lambda x: x['body'], axis=1)
+
+if __name__ == '__main__':
+    df = pd.read_csv(args.input)
+    df = df.sample(30)
+    dfs = []
+    with alive_bar(len(df), dual_line=True, title="Extracting Text") as bar:
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            futures = [pool.submit(translate_text, work)
+                       for work in df.to_dict('records')]
+            for result in as_completed(futures):
+                dfs.append(result.result())
+                bar()
+    dfs = [i for i in dfs if i is not None]
+    out = pd.concat(dfs)
+
+    print(out)
+    if args.output is not None:
+        out.to_csv(args.output, index=False)
+    else:
+        out.to_csv(input("Save file to: "), index=False)
+    print(f"Wrote {len(out)} entries.")
