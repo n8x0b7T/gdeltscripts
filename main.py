@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-from zipfile import ZipFile
-from io import BytesIO
-import csv
-from io import StringIO
 import sys
 import argparse
 import re
-from multiprocessing import Pool
 from alive_progress import alive_bar
 
 import pandas as pd

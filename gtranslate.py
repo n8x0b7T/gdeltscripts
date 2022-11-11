@@ -21,19 +21,6 @@ translator = Translator(
 
 accepted_lang = 'ar'
 
-# translated_text = []
-# the_file = open(args.articles, 'r')
-# f = csv.reader(the_file, delimiter='\t')
-# f = list(f)
-# print(len(list(f)))
-# filter out short articles
-# f = [i for i in f if len(i[3]) > 800]
-
-# f = [i for i in f if len(i[3]) > 100]
-
-
-# output_csv = csv.writer(open(args.output, 'w'), delimiter='\t')
-
 
 def translate_text(row):
     # time.sleep(.5)
@@ -56,8 +43,6 @@ def translate_text(row):
         exit()
     return None
 
-
-# df['new_var'] = df.apply(lambda x: x['body'], axis=1)
 
 if __name__ == '__main__':
     df = pd.read_csv(args.input)
