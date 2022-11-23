@@ -21,6 +21,7 @@ os.system('clear')
 def clear():
     os.system('clear')
 
+
 clear()
 
 
@@ -71,13 +72,13 @@ if __name__ == "__main__":
             # print(df.iloc[i])
             get_info(df.iloc[i])
             with bar.pause():
-                choice = input("(y/N)")
+                choice = input("(y/N) ")
                 if choice.lower() in ["y", "yes"]:
                     df.loc[i, ["label"]] = 1
                 else:
                     df.loc[i, ["label"]] = 0
             clear()
-            
+
             bar()
     df.label = df.label.astype(int)
     print(df)

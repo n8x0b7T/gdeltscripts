@@ -7,9 +7,6 @@ import re
 from alive_progress import alive_bar
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
-# import modin.pandas as pd
-# from modin.config import Engine
-# Engine.put("dask")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--country', help='two letter country code', default='IZ')
@@ -81,13 +78,12 @@ def main():
 
     dfs = []
     with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
-        with ThreadPoolExecutor(max_workers=25) as pool:
+        with ThreadPoolExecutor(max_workers=30) as pool:
             futures = [pool.submit(open_csv, work)
                        for work in zip_archives]
             for result in as_completed(futures):
                 dfs.append(result.result())
                 bar()
-    # dfs = [i for i in dfs if i is not None]
 
     df = pd.DataFrame(columns=csv_headers)
 

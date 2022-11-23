@@ -38,4 +38,3 @@ for i in f:
     labeled_articles.append(a)
 
 csv.writer(open(args.output, 'w'), delimiter='\t').writerows(labeled_articles)
-
