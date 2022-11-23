@@ -73,29 +73,25 @@ def main():
     zip_archives = zip_archives[:num_files_from_years]
 
     def open_csv(name):
-        return pd.read_csv(os.path.join(
-            args.archives, name), delimiter='\t', names=csv_headers)
+        df = pd.read_csv(os.path.join(args.archives, name),
+                         delimiter='\t', names=csv_headers)
+        # filter by country
+        df = df[df['ActionGeo_CountryCode'] == country_code]
+        # filter by event code
+        df = df[df['EventRootCode'] == 14]
+        return df
 
     dfs = []
     with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
-        with ThreadPoolExecutor(max_workers=30) as pool:
+        with ThreadPoolExecutor(max_workers=50) as pool:
             futures = [pool.submit(open_csv, work)
                        for work in zip_archives]
             for result in as_completed(futures):
                 dfs.append(result.result())
                 bar()
 
-    df = pd.DataFrame(columns=csv_headers)
-
     print('Concatenating...')
     df = pd.concat(dfs)
-
-    print("Filtering...")
-    # filter by country
-    df = df[df['ActionGeo_CountryCode'] == country_code]
-
-    # filter by event code
-    df = df[df['EventRootCode'] == 14]
 
     # remove duplicates
     df = df.drop_duplicates(subset=['SOURCEURL'], keep='first')
@@ -103,16 +99,16 @@ def main():
     if args.number != 0:
         df = df.sample(abs(int(args.number)))
 
-    write_columns = ['GLOBALEVENTID', 'SQLDATE',
-                     'GoldsteinScale', 'EventRootCode', 'ActionGeo_CountryCode', 'SOURCEURL']
+    # TODO: format date
+    print(
+        f"Got {len(df)} items from {zip_archives[0].split('.')[0]} to {zip_archives[-1].split('.')[0]}")
+
+    write_columns = ['GLOBALEVENTID', 'SQLDATE', 'GoldsteinScale', 'EventRootCode',
+                     "ActionGeo_Lat", "ActionGeo_Long", 'ActionGeo_CountryCode', 'SOURCEURL']
     if args.o is not None:
         df[write_columns].to_csv(args.o, index=False)
     else:
         df[write_columns].to_csv(input("Save the file to: "), index=False)
-    # TODO: format date
-    print(
-        f"Got {len(df)} items from {zip_archives[0].split('.')[0]} to {zip_archives[-1].split('.')[0]}"
-    )
 
 
 if __name__ == '__main__':
