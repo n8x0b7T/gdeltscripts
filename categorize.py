@@ -6,11 +6,22 @@ import re
 import nltk
 from nltk.corpus import stopwords
 from transformers import pipeline
-from termcolor import colored
+from rich import print
+from rich.text import Text
+from rich.console import Console
+from alive_progress import alive_bar
+
+console = Console()
 
 nlp = spacy.load("en_core_web_sm")
 nltk.download('stopwords')
 os.system('clear')
+
+
+def clear():
+    os.system('clear')
+
+clear()
 
 
 stop_words = set(stopwords.words('english'))
@@ -26,15 +37,15 @@ sa = pipeline('text-classification',
               model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
 
 
-def highlight_text(text, words):
-    formattedText = []
+def highlight_text(text, verbs):
+    styled_text = Text()
     for t in str(text).split(" "):
         no_punct = re.sub(r'[^\w\s]', '', t)
-        if no_punct in words:
-            formattedText.append(colored(t, 'white', attrs=["bold"]))
+        if no_punct in verbs:
+            styled_text.append(" " + t, style='bold white')
         else:
-            formattedText.append(colored(t, 'white', attrs=['dark']))
-    return (" ".join(formattedText))
+            styled_text.append(" " + t, style="#cccccc")
+    return (styled_text[2:])
 
 
 def get_verbs(s):
@@ -47,19 +58,29 @@ def get_info(row):
     verbs = get_verbs(row['body_tr'])
     text = highlight_text(row['body_tr'], verbs)
     sentiment = sa(row['body'][:450])
-    print(f"{int(sentiment[0]['score']*100)}% {sentiment[0]['label']}")
-    print(text)
-    print()
+    console.print(f"{int(sentiment[0]['score']*100)}% {sentiment[0]['label']}")
+    console.print(row['title_tr'], style='bold white')
+    console.print(text, justify="left")
 
 
 if __name__ == "__main__":
-    df = pd.read_csv(args.input).sample(2)
+    df = pd.read_csv(args.input)
     # df = df.iloc()[6]
-    for i in df.to_dict("records"):
-        get_info(i)
-
-    exit()
-
+    with alive_bar(len(df), dual_line=True, enrich_print=False, stats=False, elapsed=False) as bar:
+        for i in range(len(df)):
+            # print(df.iloc[i])
+            get_info(df.iloc[i])
+            with bar.pause():
+                choice = input("(y/N)")
+                if choice.lower() in ["y", "yes"]:
+                    df.loc[i, ["label"]] = 1
+                else:
+                    df.loc[i, ["label"]] = 0
+            clear()
+            
+            bar()
+    df.label = df.label.astype(int)
+    print(df)
 
 labels = ['ORG', 'PERSON', 'GPE', 'LOC', 'MONEY', 'LAW', 'EVENT']
 
