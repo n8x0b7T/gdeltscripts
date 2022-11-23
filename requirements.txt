@@ -2,7 +2,6 @@ pandas
 newspaper3k
 alive-progress
 googletrans==4.0.0rc1
-camel-tools
 transformers
 nltk
 rich
