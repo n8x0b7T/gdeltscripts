@@ -74,13 +74,16 @@ def main():
         zip_archives = zip_archives[:num_files_from_years]
 
     def open_csv(name):
-        df = pd.read_csv(os.path.join(args.archives, name),
-                         delimiter='\t', names=csv_headers)
-        # filter by country
-        df = df[df['ActionGeo_CountryCode'] == country_code]
-        # filter by event code
-        df = df[df['EventRootCode'] == 14]
-        return df
+        try:
+            df = pd.read_csv(os.path.join(args.archives, name),
+                            delimiter='\t', names=csv_headers)
+            # filter by country
+            df = df[df['ActionGeo_CountryCode'] == country_code]
+            # filter by event code
+            df = df[df['EventRootCode'] == 14]
+            return df
+        except:
+            return None
 
     dfs = []
     with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
@@ -92,6 +95,7 @@ def main():
                 bar()
 
     print('Concatenating...')
+    dfs = [i for i in dfs if i is not None and not i.empty]
     df = pd.concat(dfs)
 
     # remove duplicates
