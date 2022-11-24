@@ -22,7 +22,7 @@ parser.add_argument('-d',
                     help='date to at which to start ex. 20150224081500')
 parser.add_argument('--years',
                     help='how many years of gdelt archive files',
-                    default=".25")
+                    default=0)
 parser.add_argument('-o', help='select output file')
 args = parser.parse_args()
 
@@ -69,8 +69,9 @@ def main():
         except:
             print("Date not found")
             exit()
-    num_files_from_years = int(float(args.years) * 8766 * 4)
-    zip_archives = zip_archives[:num_files_from_years]
+    if args.years !=0 :
+        num_files_from_years = int(float(args.years) * 8766 * 4)
+        zip_archives = zip_archives[:num_files_from_years]
 
     def open_csv(name):
         df = pd.read_csv(os.path.join(args.archives, name),
