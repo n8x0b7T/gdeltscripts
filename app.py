@@ -31,6 +31,7 @@ hide_streamlit_style = """
             #MainMenu {display: none}
             footer {visibility: hidden}
             header {visibility: hidden}
+            div[role="radiogroup"] > :first-child {display: none !important}
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -110,24 +111,24 @@ highlighted_text['ents'] += highlight_text(cur_row['body_tr'], verbs)
 
 print(displacy.parse_ents(doc))
 ent_html = displacy.render(
-    highlighted_text, style='ent', manual=True, jupyter=False)
+    highlighted_text, style='ent', manual=True)
 # Display the entity visualization in the browser:
 st.markdown(ent_html, unsafe_allow_html=True)
 
 # choice = st.button('Yes')
 # st.button('No')
 
-
-option = st.radio("Protest", options=('Yes', 'No', 'Trash'), horizontal=True)
+st.write("<br>", unsafe_allow_html=True)
+with st.form("label_form", clear_on_submit=True):
+    option = st.radio("Protest", options=('-', 'Yes', 'No', 'Trash'), horizontal=True)
+    st.form_submit_button("Label")
 
 
 if option == "Yes":
     st.write("YUH")
+elif option == "No":
+    pass
 else:
     st.write("nah")
-
-print(st.session_state)
-
-st.write(st.session_state.num)
 
 st.session_state.num += 1
