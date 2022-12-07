@@ -28,26 +28,29 @@ st.set_page_config(
 
 hide_streamlit_style = """
             <style>
-            #MainMenu {display: none;}
+            #MainMenu {display: none}
             footer {visibility: hidden}
+            header {visibility: hidden}
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-# nlp = {}
-# nlp = spacy.load("en_core_web_sm")
 
 
 @st.cache(allow_output_mutation=True)
 def load_model():
     return spacy.load("en_core_web_sm")
+
+
 nlp = load_model()
 
 stop_words = set(stopwords.words('english'))
 
+
 @st.cache(allow_output_mutation=True)
 def load_sa():
     return pipeline('text-classification', model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
+
+
 sa = load_sa()
 
 
@@ -87,13 +90,21 @@ if st.session_state.num >= df_len:
 cur_row = df.iloc[st.session_state.num]
 
 sentiment = sa(cur_row['body'][:450])
-st.metric(
-    "Sentiment", f"{int(sentiment[0]['score']*100)}% {sentiment[0]['label']}")
+if sentiment[0]['label'] == "negative":
+    sentiment_color = "red"
+elif sentiment[0]['label'] == "positive":
+    sentiment_color = "green"
+else:
+    sentiment_color = "inherit"
+
+sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
+st.write(sentiment_text, unsafe_allow_html=True)
 
 
 doc = nlp(cur_row['body_tr'])
 highlighted_text = displacy.parse_ents(doc)
 
+print(highlighted_text)
 verbs = get_verbs(doc)
 highlighted_text['ents'] += highlight_text(cur_row['body_tr'], verbs)
 
@@ -103,14 +114,19 @@ ent_html = displacy.render(
 # Display the entity visualization in the browser:
 st.markdown(ent_html, unsafe_allow_html=True)
 
-choice = st.button('Yes')
-st.button('No')
+# choice = st.button('Yes')
+# st.button('No')
 
 
-if choice:
+option = st.radio("Protest", options=('Yes', 'No', 'Trash'), horizontal=True)
+
+
+if option == "Yes":
     st.write("YUH")
 else:
     st.write("nah")
+
+print(st.session_state)
 
 st.write(st.session_state.num)
 
