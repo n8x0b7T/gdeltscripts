@@ -101,15 +101,17 @@ else:
 sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
 st.write(sentiment_text, unsafe_allow_html=True)
 
+st.subheader(cur_row['title_tr'])
 
 doc = nlp(cur_row['body_tr'])
 highlighted_text = displacy.parse_ents(doc)
-
-print(highlighted_text)
+accepted_labels = ["DATE", "EVENT", "FAC", "GPE", "LAW", "LOC", "NORP", "ORG", "PERSON", "PRODUCT", "TIME"]
+print(highlighted_text['ents'])
+highlighted_text['ents'] = [i for i in highlighted_text['ents'] if i['label'] in accepted_labels]
 verbs = get_verbs(doc)
 highlighted_text['ents'] += highlight_text(cur_row['body_tr'], verbs)
 
-print(displacy.parse_ents(doc))
+# print(displacy.parse_ents(doc))
 ent_html = displacy.render(
     highlighted_text, style='ent', manual=True)
 # Display the entity visualization in the browser:
