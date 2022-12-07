@@ -3,6 +3,9 @@
 import streamlit as st
 import pandas as pd
 import spacy
+from spacy import displacy
+from nltk.corpus import stopwords
+import re
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -13,6 +16,12 @@ parser.add_argument('-o',
 args = parser.parse_args()
 
 
+st.set_page_config(
+    page_title="GDELT Classifier",
+    page_icon="🧐",
+    layout="wide",
+)
+
 hide_streamlit_style = """
             <style>
             #MainMenu {display: none;}
@@ -21,7 +30,35 @@ hide_streamlit_style = """
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+
+
 nlp = spacy.load("en_core_web_sm")
+stop_words = set(stopwords.words('english'))
+
+def highlight_text(text, verbs):
+    # styled_text = ""
+    # for t in str(text).split(" "):
+    #     no_punct = re.sub(r'[^\w\s]', '', t)
+    #     if no_punct in verbs:
+    #         styled_text += f" **{t}**"
+    #     else:
+    #         styled_text += f" {t}"
+    # return (styled_text[2:])
+    matches = []
+
+    for i in verbs:
+        for item in re.finditer(i,text):
+            match = {}
+            match['start'], match['end'] = item.span() 
+            match['label'] = 'VRB' # The tag/label that you would like to display
+            matches.append(match)
+    return matches
+
+def get_verbs(doc):
+    verbs = set([i.text for i in doc if i.pos_ == "VERB"])
+    verbs = [i for i in verbs if str(i).lower() not in stop_words]
+    return verbs
+
 
 
 df = pd.read_csv(args.input)
@@ -39,7 +76,19 @@ if st.session_state.num >= df_len:
     st.write("done")
     st.stop()
 cur_row = df.iloc[st.session_state.num]
-st.write(cur_row['body_tr'])
+
+
+
+doc = nlp(cur_row['body_tr'])
+highlighted_text = displacy.parse_ents(doc)
+
+verbs = get_verbs(doc)
+highlighted_text['ents'] += highlight_text(cur_row['body_tr'], verbs)
+
+print(displacy.parse_ents(doc))
+ent_html = displacy.render(highlighted_text, style='ent', manual=True, jupyter=False)
+# Display the entity visualization in the browser:
+st.markdown(ent_html, unsafe_allow_html=True)
 
 choice = st.button('Yes')
 st.button('No')
