@@ -2,6 +2,7 @@
 # Necessary imports
 import streamlit as st
 import pandas as pd
+from transformers import pipeline
 import spacy
 from spacy import displacy
 from nltk.corpus import stopwords
@@ -15,6 +16,9 @@ parser.add_argument('-o',
                     '--output',  help='where to write output')
 args = parser.parse_args()
 
+if args.input == "":
+    print("Please specify an input file")
+    exit()
 
 st.set_page_config(
     page_title="GDELT Classifier",
@@ -30,35 +34,40 @@ hide_streamlit_style = """
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+# nlp = {}
+# nlp = spacy.load("en_core_web_sm")
 
 
-nlp = spacy.load("en_core_web_sm")
+@st.cache(allow_output_mutation=True)
+def load_model():
+    return spacy.load("en_core_web_sm")
+nlp = load_model()
+
 stop_words = set(stopwords.words('english'))
 
+@st.cache(allow_output_mutation=True)
+def load_sa():
+    return pipeline('text-classification', model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
+sa = load_sa()
+
+
 def highlight_text(text, verbs):
-    # styled_text = ""
-    # for t in str(text).split(" "):
-    #     no_punct = re.sub(r'[^\w\s]', '', t)
-    #     if no_punct in verbs:
-    #         styled_text += f" **{t}**"
-    #     else:
-    #         styled_text += f" {t}"
-    # return (styled_text[2:])
     matches = []
 
     for i in verbs:
-        for item in re.finditer(i,text):
+        for item in re.finditer(i, text):
             match = {}
-            match['start'], match['end'] = item.span() 
-            match['label'] = 'VRB' # The tag/label that you would like to display
+            match['start'], match['end'] = item.span()
+            # The tag/label that you would like to display
+            match['label'] = 'VRB'
             matches.append(match)
     return matches
+
 
 def get_verbs(doc):
     verbs = set([i.text for i in doc if i.pos_ == "VERB"])
     verbs = [i for i in verbs if str(i).lower() not in stop_words]
     return verbs
-
 
 
 df = pd.read_csv(args.input)
@@ -77,6 +86,9 @@ if st.session_state.num >= df_len:
     st.stop()
 cur_row = df.iloc[st.session_state.num]
 
+sentiment = sa(cur_row['body'][:450])
+st.metric(
+    "Sentiment", f"{int(sentiment[0]['score']*100)}% {sentiment[0]['label']}")
 
 
 doc = nlp(cur_row['body_tr'])
@@ -86,7 +98,8 @@ verbs = get_verbs(doc)
 highlighted_text['ents'] += highlight_text(cur_row['body_tr'], verbs)
 
 print(displacy.parse_ents(doc))
-ent_html = displacy.render(highlighted_text, style='ent', manual=True, jupyter=False)
+ent_html = displacy.render(
+    highlighted_text, style='ent', manual=True, jupyter=False)
 # Display the entity visualization in the browser:
 st.markdown(ent_html, unsafe_allow_html=True)
 
