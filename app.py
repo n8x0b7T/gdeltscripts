@@ -1,9 +1,7 @@
-# https://towardsdatascience.com/building-web-applications-with-streamlit-for-nlp-projects-cdc1cf0b38db
-# Necessary imports
 import streamlit as st
 import pandas as pd
-from transformers import pipeline
 import spacy
+from transformers import pipeline
 from spacy import displacy
 from nltk.corpus import stopwords
 import re
