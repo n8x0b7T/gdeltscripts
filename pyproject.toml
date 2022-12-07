@@ -17,6 +17,7 @@ pandas = "^1.5.2"
 newspaper3k = "^0.2.8"
 alive-progress = "^2.4.1"
 googletrans = "4.0.0rc1"
+wordcloud = "^1.8.2.2"
 
 
 [build-system]
