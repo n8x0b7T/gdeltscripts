@@ -104,12 +104,14 @@ def open_csv():
     if "label" not in df:
         df["label"] = None
     df = df.sort_values(by='label')
+    length = len(df)
     current = df[~df["label"].isin([0, 1, -1])].first_valid_index()
-    print("yee", df.at[current, 'label'])
+    # print("yee", df.at[current, 'label'])
+    if current is None:
+        return df, length, length
     if df.at[current, 'label'] in [0, 1, -1]:
         current += 1
     # len(df[df['label'] != None])
-    length = len(df)
     return df, current, length
 
 
@@ -123,8 +125,7 @@ if 'num' not in st.session_state:
 
 if st.session_state.num + 1 >= length:
     df.to_csv("bruh.csv", index=False)
-
-    st.write("done")
+    st.write("Finished labeling CSV")
     st.stop()
 
 
@@ -148,23 +149,23 @@ if st.session_state.num + 1 >= length:
 #     print(st.session_state.num, "t")
 #     st.session_state.num += 1
 
-but_col1, but_col2, but_col3 = st.columns(3)
-with but_col1:
-    if st.button("Yes"):
-        df.at[st.session_state.num, 'label'] = 1
-        print(st.session_state.num, "y")
-        # st.session_state.num += 1
-        st.session_state.num += 1
-with but_col2:
-    if st.button("No"):
-        df.at[st.session_state.num, 'label'] = 0
-        print(st.session_state.num, "n")
-        st.session_state.num += 1
-with but_col3:
-    if st.button("Trash"):
-        df.at[st.session_state.num, 'label'] = -1
-        print(st.session_state.num, "t")
-        st.session_state.num += 1
+# but_col1, but_col2, but_col3 = st.columns(3)
+# with but_col1:
+#     if st.button("Yes"):
+#         df.at[st.session_state.num, 'label'] = 1
+#         print(st.session_state.num, "y")
+#         # st.session_state.num += 1
+#         st.session_state.num += 1
+# with but_col2:
+#     if st.button("No"):
+#         df.at[st.session_state.num, 'label'] = 0
+#         print(st.session_state.num, "n")
+#         st.session_state.num += 1
+# with but_col3:
+#     if st.button("Trash"):
+#         df.at[st.session_state.num, 'label'] = -1
+#         print(st.session_state.num, "t")
+#         st.session_state.num += 1
 
 my_bar = st.progress(st.session_state.num/length)
 
@@ -209,14 +210,41 @@ st.subheader(cur_row['title_tr'])
 tab1, tab2 = st.tabs(["Text", "WordCloud"])
 with tab1:
     st.markdown(highlighted_text, unsafe_allow_html=True)
-    pass
+
+
+
+# sentiment
+# st.write(sentiment_text, unsafe_allow_html=True)
+
+
+
+
+
+def handle_label(option):
+    # st.session_state.num += 1
+    print(option)
+    if option == "Yes":
+        df.at[st.session_state.num, 'label'] = 1
+        st.session_state.num += 1
+    elif option == "No":
+        df.at[st.session_state.num, 'label'] = 0
+        st.session_state.num += 1
+    elif option == "Trash":
+        df.at[st.session_state.num, 'label'] = -1
+        st.session_state.num += 1
+    else:
+        pass
+
+# radio selection
+# with st.form("label_form", clear_on_submit=True):
+option = st.radio("Protest", options=(
+    '-', 'Yes', 'No', 'Trash'), horizontal=True)
+st.button("Label", on_click=handle_label, args=[option])
+
 with tab2:
     cloud_col1, cloud_col2, cloud_col3 = st.columns([1, 5, 1])
     with cloud_col2:
         st.pyplot(get_wordcloud(cur_row['body_tr']))
-    pass
-# sentiment
-# st.write(sentiment_text, unsafe_allow_html=True)
 
 
 st.dataframe(df)
