@@ -10,13 +10,11 @@ from wordcloud import WordCloud
 from matplotlib import pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-i',
-                    '--input', help='CSV of extracted websites', required=True)
 parser.add_argument('-o',
-                    '--output',  help='where to write output')
+                    '--open', help='CSV of extracted websites', required=True)
 args = parser.parse_args()
 
-if args.input == "":
+if args.open == "":
     print("Please specify an input file")
     exit()
 
@@ -26,11 +24,11 @@ st.set_page_config(
     layout="wide",
 )
 
+# MainMenu {display: none}
+# header {visibility: hidden}
 hide_streamlit_style = """
             <style>
-            #MainMenu {display: none}
             footer {visibility: hidden}
-            header {visibility: hidden}
             div[role="radiogroup"] > :first-child {display: none !important}
             </style>
             """
@@ -47,12 +45,12 @@ nlp = load_model()
 stop_words = set(stopwords.words('english'))
 
 
-@st.cache(allow_output_mutation=True)
-def load_sa():
-    return pipeline('text-classification', model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
+# @st.cache(allow_output_mutation=True)
+# def load_sa():
+#     return pipeline('text-classification', model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
 
 
-sa = load_sa()
+# sa = load_sa()
 
 
 def highlight_text(text, words, tag):
@@ -74,7 +72,7 @@ def get_verbs(doc):
 
 
 def get_wordcloud(text):
-    wordcloud = WordCloud(width=1500, height=800,
+    wordcloud = WordCloud(width=2000, height=1000,
                           background_color="#0e1117").generate(text)
     fig, ax = plt.subplots()
     plt.imshow(wordcloud)
@@ -100,30 +98,91 @@ def get_wordcloud(text):
     return fig
 
 
-df = pd.read_csv(args.input)
-df = df.sample(15)
+@st.cache(allow_output_mutation=True)
+def open_csv():
+    df = pd.read_csv(args.open)
+    if "label" not in df:
+        df["label"] = None
+    df = df.sort_values(by='label')
+    current = df[~df["label"].isin([0, 1, -1])].first_valid_index()
+    print("yee", df.at[current, 'label'])
+    if df.at[current, 'label'] in [0, 1, -1]:
+        current += 1
+    # len(df[df['label'] != None])
+    length = len(df)
+    return df, current, length
 
+
+df, current, length = open_csv()
 
 # Initialization
 if 'num' not in st.session_state:
-    st.session_state.num = 0
+    print("yo")
+    st.session_state.num = current
 
-df_len = len(df)
-my_bar = st.progress(st.session_state.num/len(df))
 
-if st.session_state.num >= df_len:
+if st.session_state.num + 1 >= length:
+    df.to_csv("bruh.csv", index=False)
+
     st.write("done")
     st.stop()
-cur_row = df.iloc[st.session_state.num]
 
-sentiment = sa(cur_row['body'][:450])
-if sentiment[0]['label'] == "negative":
-    sentiment_color = "red"
-elif sentiment[0]['label'] == "positive":
-    sentiment_color = "green"
-else:
-    sentiment_color = "inherit"
-sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
+
+# # radio selection
+# with st.form("label_form", clear_on_submit=True):
+#     option = st.radio("Protest", options=(
+#         '-', 'Yes', 'No', 'Trash'), horizontal=True)
+#     st.form_submit_button("Label")
+# # print(st.session_state.num)
+# if option == "Yes":
+#     df.at[st.session_state.num, 'label'] = 1
+#     print(st.session_state.num, "y")
+#     # st.session_state.num += 1
+#     st.session_state.num += 1
+# elif option == "No":
+#     df.at[st.session_state.num, 'label'] = 0
+#     print(st.session_state.num, "n")
+#     st.session_state.num += 1
+# elif option == "Trash":
+#     df.at[st.session_state.num, 'label'] = -1
+#     print(st.session_state.num, "t")
+#     st.session_state.num += 1
+
+but_col1, but_col2, but_col3 = st.columns(3)
+with but_col1:
+    if st.button("Yes"):
+        df.at[st.session_state.num, 'label'] = 1
+        print(st.session_state.num, "y")
+        # st.session_state.num += 1
+        st.session_state.num += 1
+with but_col2:
+    if st.button("No"):
+        df.at[st.session_state.num, 'label'] = 0
+        print(st.session_state.num, "n")
+        st.session_state.num += 1
+with but_col3:
+    if st.button("Trash"):
+        df.at[st.session_state.num, 'label'] = -1
+        print(st.session_state.num, "t")
+        st.session_state.num += 1
+
+my_bar = st.progress(st.session_state.num/length)
+
+
+# st.write(current)
+st.write(st.session_state.num)
+cur_row = df.iloc[st.session_state.num]
+# st.write(cur_row["label"])
+
+
+# sentiment = sa(cur_row['body'][:250])
+# if sentiment[0]['label'] == "negative":
+#     sentiment_color = "red"
+# elif sentiment[0]['label'] == "positive":
+#     sentiment_color = "green"
+# else:
+#     sentiment_color = "inherit"
+# sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
 
 
 doc = nlp(cur_row['body_tr'])
@@ -140,7 +199,6 @@ keywords = ["demand", "demands", "uprising", "uprising", "demonstrations",
 highlighted_text['ents'] += highlight_text(
     cur_row['body_tr'], keywords, "KWRD")
 
-
 highlighted_text = displacy.render(
     highlighted_text, style='ent', manual=True, options={"colors": {"KWRD": "#13f4ad"}})
 
@@ -151,27 +209,24 @@ st.subheader(cur_row['title_tr'])
 tab1, tab2 = st.tabs(["Text", "WordCloud"])
 with tab1:
     st.markdown(highlighted_text, unsafe_allow_html=True)
+    pass
 with tab2:
-    st.pyplot(get_wordcloud(cur_row['body_tr']))
-
+    cloud_col1, cloud_col2, cloud_col3 = st.columns([1, 5, 1])
+    with cloud_col2:
+        st.pyplot(get_wordcloud(cur_row['body_tr']))
+    pass
 # sentiment
-st.write(sentiment_text, unsafe_allow_html=True)
-
-# radio selection
-with st.form("label_form", clear_on_submit=True):
-    option = st.radio("Protest", options=(
-        '-', 'Yes', 'No', 'Trash'), horizontal=True)
-    st.form_submit_button("Label")
-
-if option == "Yes":
-    pass
-elif option == "No":
-    pass
-elif option == "Trash":
-    pass
-else:
-    pass
+# st.write(sentiment_text, unsafe_allow_html=True)
 
 
-# update index
-st.session_state.num += 1
+st.dataframe(df)
+
+
+# print(st.session_state.num)
+# print()
+
+if st.button("Save and Exit"):
+    df.to_csv("bruh.csv", index=False)
+    st.write("done")
+    st.empty()
+    # st.experimental_rerun()
