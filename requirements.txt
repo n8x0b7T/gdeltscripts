@@ -1,8 +1,0 @@
-pandas
-newspaper3k
-alive-progress
-googletrans==4.0.0rc1
-transformers
-nltk
-rich
-streamlit
