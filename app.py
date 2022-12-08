@@ -128,6 +128,9 @@ if st.session_state.num >= length:
     st.write("Finished labeling CSV")
     st.stop()
 
+
+# status bar
+st.text(f"{st.session_state.num}/{length}")
 my_bar = st.progress(st.session_state.num/length)
 
 
