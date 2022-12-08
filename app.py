@@ -45,12 +45,12 @@ nlp = load_model()
 stop_words = set(stopwords.words('english'))
 
 
-# @st.cache(allow_output_mutation=True)
-# def load_sa():
-#     return pipeline('text-classification', model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
+@st.cache(allow_output_mutation=True)
+def load_sa():
+    return pipeline('text-classification', model='CAMeL-Lab/bert-base-arabic-camelbert-da-sentiment')
 
 
-# sa = load_sa()
+sa = load_sa()
 
 
 def highlight_text(text, words, tag):
@@ -72,7 +72,7 @@ def get_verbs(doc):
 
 
 def get_wordcloud(text):
-    wordcloud = WordCloud(width=2000, height=1000,
+    wordcloud = WordCloud(width=1000, height=500,
                           background_color="#0e1117").generate(text)
     fig, ax = plt.subplots()
     plt.imshow(wordcloud)
@@ -123,67 +123,26 @@ if 'num' not in st.session_state:
     st.session_state.num = current
 
 
-if st.session_state.num + 1 >= length:
+if st.session_state.num >= length:
     df.to_csv("bruh.csv", index=False)
     st.write("Finished labeling CSV")
     st.stop()
 
-
-# # radio selection
-# with st.form("label_form", clear_on_submit=True):
-#     option = st.radio("Protest", options=(
-#         '-', 'Yes', 'No', 'Trash'), horizontal=True)
-#     st.form_submit_button("Label")
-# # print(st.session_state.num)
-# if option == "Yes":
-#     df.at[st.session_state.num, 'label'] = 1
-#     print(st.session_state.num, "y")
-#     # st.session_state.num += 1
-#     st.session_state.num += 1
-# elif option == "No":
-#     df.at[st.session_state.num, 'label'] = 0
-#     print(st.session_state.num, "n")
-#     st.session_state.num += 1
-# elif option == "Trash":
-#     df.at[st.session_state.num, 'label'] = -1
-#     print(st.session_state.num, "t")
-#     st.session_state.num += 1
-
-# but_col1, but_col2, but_col3 = st.columns(3)
-# with but_col1:
-#     if st.button("Yes"):
-#         df.at[st.session_state.num, 'label'] = 1
-#         print(st.session_state.num, "y")
-#         # st.session_state.num += 1
-#         st.session_state.num += 1
-# with but_col2:
-#     if st.button("No"):
-#         df.at[st.session_state.num, 'label'] = 0
-#         print(st.session_state.num, "n")
-#         st.session_state.num += 1
-# with but_col3:
-#     if st.button("Trash"):
-#         df.at[st.session_state.num, 'label'] = -1
-#         print(st.session_state.num, "t")
-#         st.session_state.num += 1
-
 my_bar = st.progress(st.session_state.num/length)
 
 
-# st.write(current)
-st.write(st.session_state.num)
+# st.write(st.session_state.num)
 cur_row = df.iloc[st.session_state.num]
-# st.write(cur_row["label"])
 
 
-# sentiment = sa(cur_row['body'][:250])
-# if sentiment[0]['label'] == "negative":
-#     sentiment_color = "red"
-# elif sentiment[0]['label'] == "positive":
-#     sentiment_color = "green"
-# else:
-#     sentiment_color = "inherit"
-# sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
+sentiment = sa(cur_row['body'][:250])
+if sentiment[0]['label'] == "negative":
+    sentiment_color = "red"
+elif sentiment[0]['label'] == "positive":
+    sentiment_color = "green"
+else:
+    sentiment_color = "inherit"
+sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
 
 
 doc = nlp(cur_row['body_tr'])
@@ -212,12 +171,7 @@ with tab1:
     st.markdown(highlighted_text, unsafe_allow_html=True)
 
 
-
-# sentiment
-# st.write(sentiment_text, unsafe_allow_html=True)
-
-
-
+st.write(sentiment_text, unsafe_allow_html=True)
 
 
 def handle_label(option):
@@ -235,8 +189,8 @@ def handle_label(option):
     else:
         pass
 
+
 # radio selection
-# with st.form("label_form", clear_on_submit=True):
 option = st.radio("Protest", options=(
     '-', 'Yes', 'No', 'Trash'), horizontal=True)
 st.button("Label", on_click=handle_label, args=[option])
@@ -246,12 +200,6 @@ with tab2:
     with cloud_col2:
         st.pyplot(get_wordcloud(cur_row['body_tr']))
 
-
-st.dataframe(df)
-
-
-# print(st.session_state.num)
-# print()
 
 if st.button("Save and Exit"):
     df.to_csv("bruh.csv", index=False)
