@@ -12,17 +12,19 @@ from matplotlib import pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('-o',
                     '--open', help='CSV of extracted websites', required=True)
+parser.add_argument('--remove-helpers', help='CSV of extracted websites', action='store_true')
 args = parser.parse_args()
 
-if args.open == "":
-    print("Please specify an input file")
-    exit()
 
 st.set_page_config(
     page_title="GDELT Classifier",
     page_icon="🧐",
     layout="wide",
 )
+if args.open == "":
+    print("Please specify an input file")
+    st.stop()
+    exit()
 
 # MainMenu {display: none}
 # header {visibility: hidden}
@@ -124,7 +126,7 @@ if 'num' not in st.session_state:
 
 
 if st.session_state.num >= length:
-    df.to_csv("bruh.csv", index=False)
+    df.to_csv(args.open, index=False)
     st.write("Finished labeling CSV")
     st.stop()
 
@@ -137,33 +139,38 @@ my_bar = st.progress(st.session_state.num/length)
 # st.write(st.session_state.num)
 cur_row = df.iloc[st.session_state.num]
 
+sentiment_text = ""
+highlighted_text = ""
 
-sentiment = sa(cur_row['body'][:250])
-if sentiment[0]['label'] == "negative":
-    sentiment_color = "red"
-elif sentiment[0]['label'] == "positive":
-    sentiment_color = "green"
+if not args.remove_helpers:
+    sentiment = sa(cur_row['body'][:250])
+    if sentiment[0]['label'] == "negative":
+        sentiment_color = "red"
+    elif sentiment[0]['label'] == "positive":
+        sentiment_color = "green"
+    else:
+        sentiment_color = "inherit"
+    sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
+
+
+    doc = nlp(cur_row['body_tr'])
+    highlighted_text = displacy.parse_ents(doc)
+    accepted_labels = ["DATE", "EVENT", "FAC", "GPE", "LAW",
+                    "LOC", "NORP", "ORG", "PERSON", "PRODUCT", "TIME"]
+    highlighted_text['ents'] = [
+        i for i in highlighted_text['ents'] if i['label'] in accepted_labels]
+    verbs = get_verbs(doc)
+    highlighted_text['ents'] += highlight_text(cur_row['body_tr'], verbs, "VRB")
+
+    keywords = ["demand", "demands", "uprising", "uprising", "demonstrations",
+                "demonstrations", "protest", "protests", "corruption", "reform", "violence"]
+    highlighted_text['ents'] += highlight_text(
+        cur_row['body_tr'], keywords, "KWRD")
+
+    highlighted_text = displacy.render(
+        highlighted_text, style='ent', manual=True, options={"colors": {"KWRD": "#13f4ad"}})
 else:
-    sentiment_color = "inherit"
-sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
-
-
-doc = nlp(cur_row['body_tr'])
-highlighted_text = displacy.parse_ents(doc)
-accepted_labels = ["DATE", "EVENT", "FAC", "GPE", "LAW",
-                   "LOC", "NORP", "ORG", "PERSON", "PRODUCT", "TIME"]
-highlighted_text['ents'] = [
-    i for i in highlighted_text['ents'] if i['label'] in accepted_labels]
-verbs = get_verbs(doc)
-highlighted_text['ents'] += highlight_text(cur_row['body_tr'], verbs, "VRB")
-
-keywords = ["demand", "demands", "uprising", "uprising", "demonstrations",
-            "demonstrations", "protest", "protests", "corruption", "reform", "violence"]
-highlighted_text['ents'] += highlight_text(
-    cur_row['body_tr'], keywords, "KWRD")
-
-highlighted_text = displacy.render(
-    highlighted_text, style='ent', manual=True, options={"colors": {"KWRD": "#13f4ad"}})
+    highlighted_text = cur_row['body_tr']
 
 # title
 st.subheader(cur_row['title_tr'])
@@ -200,12 +207,13 @@ st.button("Label", on_click=handle_label, args=[option])
 
 with tab2:
     cloud_col1, cloud_col2, cloud_col3 = st.columns([1, 5, 1])
-    with cloud_col2:
-        st.pyplot(get_wordcloud(cur_row['body_tr']))
+    if not args.remove_helpers:
+        with cloud_col2:
+            st.pyplot(get_wordcloud(cur_row['body_tr']))
 
 
 if st.button("Save and Exit"):
-    df.to_csv("bruh.csv", index=False)
+    df.to_csv(args.open, index=False)
     st.write("done")
     st.empty()
     # st.experimental_rerun()
