@@ -12,7 +12,8 @@ from matplotlib import pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('-o',
                     '--open', help='CSV of extracted websites', required=True)
-parser.add_argument('--remove-helpers', help='CSV of extracted websites', action='store_true')
+parser.add_argument('--remove-helpers',
+                    help='CSV of extracted websites', action='store_true')
 args = parser.parse_args()
 
 
@@ -122,7 +123,6 @@ df, current, length = open_csv()
 
 # Initialization
 if 'num' not in st.session_state:
-    print("yo")
     st.session_state.num = current
 
 
@@ -153,18 +153,22 @@ if not args.remove_helpers:
         sentiment_color = "inherit"
     sentiment_text = f"<p style=\"margin:0;opacity:0.8\">Sentiment</p><h4 style=\"padding-top:0\">{int(sentiment[0]['score']*100)}% <span style=\"color:{sentiment_color}\">{sentiment[0]['label']}</h4>"
 
-
     doc = nlp(cur_row['body_tr'])
     highlighted_text = displacy.parse_ents(doc)
     accepted_labels = ["DATE", "EVENT", "FAC", "GPE", "LAW",
-                    "LOC", "NORP", "ORG", "PERSON", "PRODUCT", "TIME"]
+                       "LOC", "NORP", "ORG", "PERSON", "PRODUCT", "TIME"]
     highlighted_text['ents'] = [
         i for i in highlighted_text['ents'] if i['label'] in accepted_labels]
     verbs = get_verbs(doc)
-    highlighted_text['ents'] += highlight_text(cur_row['body_tr'], verbs, "VRB")
 
-    keywords = ["demand", "demands", "uprising", "uprising", "demonstrations",
-                "demonstrations", "protest", "protests", "corruption", "reform", "violence"]
+    keywords = set(["demand", "demands", "uprising", "uprising", "demonstrations",
+                    "demonstrations", "protest", "protests", "corruption", "reform", "violence",
+                    "peaceful", "march", "protestors", "crowd", "oppressed", "oppression"])
+
+    verb_highlights = highlight_text(cur_row['body_tr'], verbs, "VRB")
+    verb_highlights = [i for i in verb_highlights if cur_row['body_tr'][i['start']:i['end']] not in keywords]
+    highlighted_text['ents'] += verb_highlights
+
     highlighted_text['ents'] += highlight_text(
         cur_row['body_tr'], keywords, "KWRD")
 
@@ -187,7 +191,6 @@ st.write(sentiment_text, unsafe_allow_html=True)
 
 def handle_label(option):
     # st.session_state.num += 1
-    print(option)
     if option == "Yes":
         df.at[st.session_state.num, 'label'] = 1
         st.session_state.num += 1
