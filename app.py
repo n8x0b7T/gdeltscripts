@@ -32,6 +32,7 @@ hide_streamlit_style = """
             <style>
             footer {visibility: hidden}
             div[role="radiogroup"] > :first-child {display: none !important}
+            .entity span {display: none}
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
