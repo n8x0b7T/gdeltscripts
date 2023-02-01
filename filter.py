@@ -31,6 +31,7 @@ last_update_url = 'http://data.gdeltproject.org/gdeltv2/lastupdate-translation.t
 
 req_headers = {'User-Agent': 'Mozilla/5.0'}
 
+
 csv_headers = [
     'GLOBALEVENTID', 'SQLDATE', 'MonthYear', 'Year', 'FractionDate',
     'Actor1Code', 'Actor1Name', 'Actor1CountryCode', 'Actor1KnownGroupCode',
@@ -52,7 +53,13 @@ csv_headers = [
     'SOURCEURL'
 ]
 
+
 country_code = args.country.upper()
+country_code = ["DZ", "MA", "KM", "TD", "DJ", "IQ", "SO", "BH", "EG",
+                "JO", "KW", "LB", "LY", "OM", "QA", "SA", "SD", "TN", "AE", "YE", "PS"]
+
+needed_columns = ['GLOBALEVENTID', 'SQLDATE', 'GoldsteinScale', 'EventRootCode',
+                  "ActionGeo_Lat", "ActionGeo_Long", 'ActionGeo_CountryCode', 'SOURCEURL']
 
 
 def main():
@@ -69,16 +76,17 @@ def main():
         except:
             print("Date not found")
             exit()
-    if args.years !=0 :
+    if args.years != 0:
         num_files_from_years = int(float(args.years) * 8766 * 4)
         zip_archives = zip_archives[:num_files_from_years]
 
     def open_csv(name):
         try:
             df = pd.read_csv(os.path.join(args.archives, name),
-                            delimiter='\t', names=csv_headers)
+                             delimiter='\t', names=csv_headers, usecols=needed_columns)
             # filter by country
-            df = df[df['ActionGeo_CountryCode'] == country_code]
+            df = df[df['ActionGeo_CountryCode'].isin(country_code)]
+            # print(df)
             # filter by event code
             df = df[df['EventRootCode'] == 14]
             return df
@@ -87,7 +95,7 @@ def main():
 
     dfs = []
     with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
-        with ThreadPoolExecutor(max_workers=50) as pool:
+        with ThreadPoolExecutor(max_workers=20) as pool:
             futures = [pool.submit(open_csv, work)
                        for work in zip_archives]
             for result in as_completed(futures):
@@ -96,7 +104,11 @@ def main():
 
     print('Concatenating...')
     dfs = [i for i in dfs if i is not None and not i.empty]
-    df = pd.concat(dfs)
+    if len(dfs) != 0:
+        df = pd.concat(dfs)
+    else:
+        print("Nothing selected")
+        exit()
 
     # remove duplicates
     df = df.drop_duplicates(subset=['SOURCEURL'], keep='first')
@@ -108,12 +120,12 @@ def main():
     print(
         f"Got {len(df)} items from {zip_archives[0].split('.')[0]} to {zip_archives[-1].split('.')[0]}")
 
-    write_columns = ['GLOBALEVENTID', 'SQLDATE', 'GoldsteinScale', 'EventRootCode',
-                     "ActionGeo_Lat", "ActionGeo_Long", 'ActionGeo_CountryCode', 'SOURCEURL']
+    print(df)
+
     if args.o is not None:
-        df[write_columns].to_csv(args.o, index=False)
+        df[needed_columns].to_csv(args.o, index=False)
     else:
-        df[write_columns].to_csv(input("Save the file to: "), index=False)
+        df[needed_columns].to_csv(input("Save the file to: "), index=False)
 
 
 if __name__ == '__main__':

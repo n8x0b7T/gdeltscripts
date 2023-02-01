@@ -41,7 +41,7 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 @st.cache(allow_output_mutation=True)
 def load_model():
-    return spacy.load("en_core_web_sm")
+    return spacy.load("en_core_web_trf")
 
 
 nlp = load_model()
