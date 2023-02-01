@@ -67,6 +67,10 @@ def lf_keyword_oppress(x):
 def lf_keyword_streets(x):
     return PROTEST if "streets" in x.body_tr.lower() else ABSTAIN
 
+@labeling_function()
+def lf_keyword_lawyer(x):
+    return NOT_PROTEST if "lawyer" in x.body_tr.lower() else ABSTAIN
+
 
 # invalid articles
 @labeling_function()
@@ -84,7 +88,7 @@ def lf_sentiment(x):
     return PROTEST if sentiment[0]['label'] == "negative" else ABSTAIN
 
 
-lfs = [lf_keyword_protest, lf_keyword_demand, lf_keyword_uprising, lf_keyword_demonstration, lf_keyword_corruption, lf_keyword_reform, lf_keyword_peaceful, lf_keyword_violence, lf_keyword_crowd, lf_keyword_march, lf_keyword_oppress, lf_keyword_streets, lf_keyword_searchsort, lf_short, lf_sentiment]
+lfs = [lf_keyword_lawyer, lf_keyword_protest, lf_keyword_demand, lf_keyword_uprising, lf_keyword_demonstration, lf_keyword_corruption, lf_keyword_reform, lf_keyword_peaceful, lf_keyword_violence, lf_keyword_crowd, lf_keyword_march, lf_keyword_oppress, lf_keyword_streets, lf_keyword_searchsort, lf_short, lf_sentiment]
 applier = PandasLFApplier(lfs)
 L_train = applier.apply(df)
 
