@@ -178,7 +178,7 @@ else:
     highlighted_text = cur_row['body_tr']
 
 # title
-st.subheader(cur_row['title_tr'])
+st.subheader(cur_row['title_tr'][:180])
 
 
 tab1, tab2 = st.tabs(["Text", "WordCloud"])
