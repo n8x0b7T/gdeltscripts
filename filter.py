@@ -56,7 +56,7 @@ csv_headers = [
 
 country_code = args.country.upper()
 country_code = ["DZ", "MA", "KM", "TD", "DJ", "IQ", "SO", "BH", "EG",
-                "JO", "KW", "LB", "LY", "OM", "QA", "SA", "SD", "TN", "AE", "YE", "PS"]
+                "JO", "KW", "LB", "LY", "OM", "QA", "SA", "SD", "TN", "AE", "YE", "PS", "IZ"]
 
 needed_columns = ['GLOBALEVENTID', 'SQLDATE', 'GoldsteinScale', 'EventRootCode',
                   "ActionGeo_Lat", "ActionGeo_Long", 'ActionGeo_CountryCode', 'SOURCEURL']
