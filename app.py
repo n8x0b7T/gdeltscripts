@@ -161,9 +161,9 @@ if not args.remove_helpers:
         i for i in highlighted_text['ents'] if i['label'] in accepted_labels]
     verbs = get_verbs(doc)
 
-    keywords = set(["demand", "demands", "uprising", "uprising", "demonstrations",
-                    "demonstrations", "protest", "protests", "corruption", "reform", "violence",
-                    "peaceful", "march", "protestors", "crowd", "oppressed", "oppression"])
+    keywords = set(["demand", "demand", "uprising",
+                    "demonstration", "protest", "corruption", "reform", "violence",
+                    "peaceful", "march", "crowd", "oppressed", "oppression"])
 
     verb_highlights = highlight_text(cur_row['body_tr'], verbs, "VRB")
     verb_highlights = [i for i in verb_highlights if cur_row['body_tr'][i['start']:i['end']] not in keywords]
