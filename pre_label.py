@@ -3,8 +3,11 @@ from snorkel.labeling import PandasLFApplier
 from snorkel.labeling.model import LabelModel
 from transformers import pipeline
 import pandas as pd
+import sys
 
-df = pd.read_csv("all_translated.csv")
+file = sys.argv[1]
+
+df = pd.read_csv(file)
 df['body_tr'] = df.apply(lambda row: str(row['body_tr']), axis=1)
 
 
@@ -92,7 +95,7 @@ lfs = [lf_keyword_lawyer, lf_keyword_protest, lf_keyword_demand, lf_keyword_upri
 applier = PandasLFApplier(lfs)
 L_train = applier.apply(df)
 
-label_model = LabelModel(cardinality=3, verbose=True, device="cuda")
+label_model = LabelModel(cardinality=3, verbose=True, device="cpu")
 label_model.fit(L_train, n_epochs=5, log_freq=50, seed=123)
 df["snorkel_label"] = label_model.predict(L=L_train, tie_break_policy="abstain")
-df.to_csv("predicted.csv", index=False)
+df.to_csv(file, index=False)
