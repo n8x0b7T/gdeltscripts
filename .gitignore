@@ -6,3 +6,4 @@
 *.bak
 data
 __pycache__
+.pyproject.toml.swp
