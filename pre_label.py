@@ -124,7 +124,7 @@ def lf_sentiment(x):
 
 # non-protest rules
 lfs = [lf_keyword_activist, lf_keyword_demonstration_yesterday, lf_keyword_popular_crowd, lf_keyword_protest, lf_keyword_demand, lf_keyword_uprising, lf_keyword_demonstration,
-       lf_keyword_corruption, lf_keyword_reform, lf_keyword_violence, lf_keyword_crowd, lf_keyword_oppress, lf_keyword_searchsort, lf_short]
+       lf_keyword_corruption, lf_keyword_violence, lf_keyword_crowd, lf_keyword_oppress, lf_keyword_searchsort, lf_short]
 
 applier = PandasLFApplier(lfs)
 L_train = applier.apply(df)
