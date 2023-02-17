@@ -23,7 +23,8 @@ df = pd.read_csv(file)
 def prepare_data(df):
     # data = df["body"].to_list()
     # label = df["label"].to_list()
-    return train_test_split(df, test_size=0.2, random_state=30)
+    return train_test_split(df, test_size=0.3, random_state=1)
+
 
 train, test = prepare_data(df)
 # print(train[1])
@@ -32,16 +33,17 @@ model = Pipeline([
     ('vect', TfidfVectorizer()),
     ('clf', LogisticRegression()),
 ])
-model.fit(train['body'], train['label'])
+model.fit(train['pre_processed'], train['label'])
 
-predicted_categories = model.predict(test['body'])
-print(f"The accuracy is {accuracy_score(test['label'], predicted_categories)}.\n")
+predicted_categories = model.predict(test['pre_processed'])
+print(
+    f"The accuracy is {accuracy_score(test['label'], predicted_categories)}.\n")
 
 plt.figure(figsize=(6, 4))
 plt.title("title")
 # plot the confusion matrix
 mat = confusion_matrix(test['label'], predicted_categories)
-sns.heatmap(mat.T, square = True, annot=True, fmt = "d", xticklabels=['spam', 'ham'],yticklabels=['spam', 'ham'])
+sns.heatmap(mat.T, square=True, annot=True, fmt="d", xticklabels=['protest', 'not'], yticklabels=['protest', 'not'])
 plt.xlabel("true labels")
 plt.ylabel("predicted label")
 plt.show()

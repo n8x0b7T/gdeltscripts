@@ -3,6 +3,7 @@
 *.json
 *.zip
 *.txt
+!stop_words.txt
 *.bak
 data
 __pycache__
