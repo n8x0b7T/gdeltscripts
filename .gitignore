@@ -3,6 +3,8 @@
 *.json
 *.zip
 *.txt
+*.pkl
+*.png
 !stop_words.txt
 *.bak
 data
