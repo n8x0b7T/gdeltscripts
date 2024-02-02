@@ -9,4 +9,5 @@
 *.bak
 data
 __pycache__
+env
 .pyproject.toml.swp

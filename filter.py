@@ -88,14 +88,14 @@ def main():
             df = df[df['ActionGeo_CountryCode'].isin(country_code)]
             # print(df)
             # filter by event code
-            df = df[df['EventRootCode'] == 14]
+            # df = df[df['EventRootCode'] == 14]
             return df
         except:
             return None
 
     dfs = []
     with alive_bar(len(zip_archives), dual_line=True, title="Opening CSVs") as bar:
-        with ThreadPoolExecutor(max_workers=20) as pool:
+        with ThreadPoolExecutor(max_workers=16) as pool:
             futures = [pool.submit(open_csv, work)
                        for work in zip_archives]
             for result in as_completed(futures):
